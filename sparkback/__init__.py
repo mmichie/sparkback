@@ -1,23 +1,25 @@
-
 # -*- coding: utf-8 -*-
-import sys
+from __future__ import division
+import argparse
 
 ticks = ('▁', '▂', '▃', '▄', '▅', '▆', '▇', '█')
 
-def scale_data(d):
-    data_range = max(d) - min(d)
-    divider = data_range / (len(ticks) - 1)
+def scale_data(data):
+    m = min(data)
+    n = (max(data) - m) / (len(ticks) - 1)
+  
+    print m,n
 
-    min_value = min(d)
-
-    scaled = [int(abs(round((i - min_value) / divider))) for i in d]
-
-    return scaled
+    return [ ticks[int((t - m) / n)] for t in data ]
 
 def print_ansi_spark(d):
-    for i in d:
-        sys.stdout.write(ticks[i])
-    print ''
+    print ''.join(d)
 
 if __name__ == "__main__":
-    print 'hello world'
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('integers', metavar='N', type=int, nargs='+',
+                        help='an integer for the accumulator')
+    args = parser.parse_args()
+    print_ansi_spark(scale_data(args.integers))
+
+

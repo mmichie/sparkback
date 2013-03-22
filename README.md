@@ -1,0 +1,4 @@
+sparkback
+=========
+
+Python Sparkline Library

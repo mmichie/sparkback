@@ -8,8 +8,6 @@ def scale_data(data):
     m = min(data)
     n = (max(data) - m) / (len(ticks) - 1)
   
-    print m,n
-
     return [ ticks[int((t - m) / n)] for t in data ]
 
 def print_ansi_spark(d):

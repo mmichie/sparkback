@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='Sparkback',
-      version='0.0',
+      version='0.01',
       description='Sparklines Library',
       author='Matt Michie',
       author_email='mmichie@gmail.com',

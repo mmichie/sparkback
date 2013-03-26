@@ -7,8 +7,13 @@ ticks = ('▁', '▂', '▃', '▄', '▅', '▆', '▇', '█')
 def scale_data(data):
     m = min(data)
     n = (max(data) - m) / (len(ticks) - 1)
-  
-    return [ ticks[int((t - m) / n)] for t in data ]
+
+    # if every element is the same height return all lower ticks, else compute
+    # the tick height
+    if n == 0: 
+        return [ ticks[0] for t in data]
+    else: 
+        return [ ticks[int((t - m) / n)] for t in data ]
 
 def print_ansi_spark(d):
     print ''.join(d)
@@ -19,5 +24,3 @@ if __name__ == "__main__":
                         help='an integer for the accumulator')
     args = parser.parse_args()
     print_ansi_spark(scale_data(args.integers))
-
-

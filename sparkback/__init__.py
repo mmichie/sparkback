@@ -19,8 +19,8 @@ def print_ansi_spark(d):
     print ''.join(d)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('integers', metavar='N', type=int, nargs='+',
-                        help='an integer for the accumulator')
+    parser = argparse.ArgumentParser(description='Process numbers')
+    parser.add_argument('numbers', metavar='N', type=float, nargs='+',
+                        help='series of data to plot')
     args = parser.parse_args()
-    print_ansi_spark(scale_data(args.integers))
+    print_ansi_spark(scale_data(args.numbers))

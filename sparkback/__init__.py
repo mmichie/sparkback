@@ -2,9 +2,9 @@
 from __future__ import division
 import argparse
 
-ticks = ('▁', '▂', '▃', '▄', '▅', '▆', '▇', '█')
+ansi_ticks = ('▁', '▂', '▃', '▄', '▅', '▆', '▇', '█')
 
-def scale_data(data):
+def scale_data(data, ticks):
     m = min(data)
     n = (max(data) - m) / (len(ticks) - 1)
 
@@ -23,4 +23,4 @@ if __name__ == "__main__":
     parser.add_argument('numbers', metavar='N', type=float, nargs='+',
                         help='series of data to plot')
     args = parser.parse_args()
-    print_ansi_spark(scale_data(args.numbers))
+    print_ansi_spark(scale_data(args.numbers, ansi_ticks))

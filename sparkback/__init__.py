@@ -13,7 +13,7 @@ def scale_data(data, ticks):
     if n == 0: 
         return ( ticks[0] for t in data )
     else: 
-        return ( ticks[int((t - m) / n)] for t in data )
+        return ( ticks[int(round((t - m) / n))] for t in data )
 
 def print_ansi_spark(d):
     print ''.join(d)

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
-import argparse
 
 ansi_ticks = ('▁', '▂', '▃', '▄', '▅', '▆', '▇', '█')
 
@@ -17,10 +16,3 @@ def scale_data(data, ticks):
 
 def print_ansi_spark(d):
     print ''.join(d)
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process numbers')
-    parser.add_argument('numbers', metavar='N', type=float, nargs='+',
-                        help='series of data to plot')
-    args = parser.parse_args()
-    print_ansi_spark(scale_data(args.numbers, ansi_ticks))

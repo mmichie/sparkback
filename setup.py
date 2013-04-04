@@ -9,4 +9,5 @@ setup(name='Sparkback',
       author_email='mmichie@gmail.com',
       url='https://github.com/mmichie/sparkback',
       packages=['sparkback',],
+      scripts=['bin/spark'],
      )

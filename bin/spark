@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 
-import argparse
-from sparkback import *
+from sparkback.spark import main
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process numbers')
-    parser.add_argument('numbers', metavar='N', type=float, nargs='+',
-                        help='series of data to plot')
-    args = parser.parse_args()
-    print_ansi_spark(scale_data(args.numbers, ansi_ticks))
+    main()

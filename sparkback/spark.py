@@ -9,6 +9,7 @@ TICKS_OPTIONS = {
     "ascii": (".", "o", "O", "#", "@"),
     "numeric": ("1", "2", "3", "4", "5"),
     "braille": ("⣀", "⣤", "⣶", "⣿"),
+    "arrows": ("↓", "→", "↗", "↑"),
 }
 
 
@@ -19,14 +20,25 @@ def print_stats(data):
     print(f"Standard Deviation: {statistics.stdev(data)}")
 
 
-def scale_data(data, ticks):
-    m = min(data)
-    n = (max(data) - m) / (len(ticks) - 1)
-
-    if n == 0:
-        return (ticks[0] for t in data)
+def scale_data(data, ticks, ticks_style):
+    if ticks_style == "arrows":
+        result = []
+        for i in range(1, len(data)):
+            if data[i] > data[i - 1]:
+                result.append(ticks[3])  # up arrow
+            elif data[i] < data[i - 1]:
+                result.append(ticks[0])  # down arrow
+            else:
+                result.append(ticks[1])  # right arrow for no change
+        return result
     else:
-        return (ticks[int(round((t - m) / n))] for t in data)
+        m = min(data)
+        n = (max(data) - m) / (len(ticks) - 1)
+
+        if n == 0:
+            return (ticks[0] for t in data)
+        else:
+            return (ticks[int(round((t - m) / n))] for t in data)
 
 
 def print_ansi_spark(d):
@@ -51,7 +63,7 @@ def main():
     )
     args = parser.parse_args()
     ticks = TICKS_OPTIONS[args.ticks]
-    print_ansi_spark(scale_data(args.numbers, ticks))
+    print_ansi_spark(scale_data(args.numbers, TICKS_OPTIONS[args.ticks], args.ticks))
 
     if args.stats:
         print_stats(args.numbers)

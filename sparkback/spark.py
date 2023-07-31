@@ -14,10 +14,13 @@ TICKS_OPTIONS = {
 
 
 def print_stats(data):
-    print(f"Minimum: {min(data)}")
-    print(f"Maximum: {max(data)}")
-    print(f"Mean: {statistics.mean(data)}")
-    print(f"Standard Deviation: {statistics.stdev(data)}")
+    stats_str = (
+        f"Minimum: {min(data)}\n"
+        f"Maximum: {max(data)}\n"
+        f"Mean: {statistics.mean(data)}\n"
+        f"Standard Deviation: {statistics.stdev(data)}"
+    )
+    return stats_str
 
 
 def scale_data(data, ticks, ticks_style):
@@ -66,4 +69,4 @@ def main():
     print_ansi_spark(scale_data(args.numbers, TICKS_OPTIONS[args.ticks], args.ticks))
 
     if args.stats:
-        print_stats(args.numbers)
+        print(print_stats(args.numbers))

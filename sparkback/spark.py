@@ -2,7 +2,13 @@
 from __future__ import division
 import argparse
 
-ansi_ticks = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
+TICKS_OPTIONS = {
+    "default": ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"),
+    "block": ("▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"),
+    "ascii": (".", "o", "O", "#", "@"),
+    "numeric": ("1", "2", "3", "4", "5"),
+    "braille": ("⣀", "⣤", "⣶", "⣿"),
+}
 
 
 def scale_data(data, ticks):
@@ -26,5 +32,12 @@ def main():
     parser.add_argument(
         "numbers", metavar="N", type=float, nargs="+", help="series of data to plot"
     )
+    parser.add_argument(
+        "--ticks",
+        choices=TICKS_OPTIONS.keys(),
+        default="default",
+        help="the style of ticks to use",
+    )
     args = parser.parse_args()
-    print_ansi_spark(scale_data(args.numbers, ansi_ticks))
+    ticks = TICKS_OPTIONS[args.ticks]
+    print_ansi_spark(scale_data(args.numbers, ticks))

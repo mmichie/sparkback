@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "Sparkback"
-version = "0.1.0"
+version = "0.1.1"
 description = "Sparklines Library"
 authors = ["Matt Michie <mmichie@gmail.com>"]
 homepage = "https://github.com/mmichie/sparkback"

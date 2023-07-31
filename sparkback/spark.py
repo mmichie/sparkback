@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 import argparse
+import statistics
 
 TICKS_OPTIONS = {
     "default": ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"),
@@ -11,12 +12,17 @@ TICKS_OPTIONS = {
 }
 
 
+def print_stats(data):
+    print(f"Minimum: {min(data)}")
+    print(f"Maximum: {max(data)}")
+    print(f"Mean: {statistics.mean(data)}")
+    print(f"Standard Deviation: {statistics.stdev(data)}")
+
+
 def scale_data(data, ticks):
     m = min(data)
     n = (max(data) - m) / (len(ticks) - 1)
 
-    # if every element is the same height return all lower ticks, else compute
-    # the tick height
     if n == 0:
         return (ticks[0] for t in data)
     else:
@@ -38,6 +44,14 @@ def main():
         default="default",
         help="the style of ticks to use",
     )
+    parser.add_argument(
+        "--stats",
+        action="store_true",
+        help="show statistics about the data",
+    )
     args = parser.parse_args()
     ticks = TICKS_OPTIONS[args.ticks]
     print_ansi_spark(scale_data(args.numbers, ticks))
+
+    if args.stats:
+        print_stats(args.numbers)

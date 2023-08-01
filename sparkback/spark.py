@@ -54,7 +54,7 @@ def print_stats(data):
     return stats_str
 
 
-def scale_data(data, ticks, ticks_style):
+def scale_data(data, ticks, ticks_style, verbose=False):
     """
     Scale the data according to the selected ticks style.
 
@@ -70,30 +70,45 @@ def scale_data(data, ticks, ticks_style):
         result = []
         for i in range(1, len(data)):
             if data[i] > data[i - 1]:
-                result.append(ticks[3])  # up arrow
+                if verbose:
+                    result.append(f"Data point {i} has increased from {data[i-1]} to {data[i]}.")
+                else:
+                    result.append(ticks[3])  # up arrow
             elif data[i] < data[i - 1]:
-                result.append(ticks[0])  # down arrow
+                if verbose:
+                    result.append(f"Data point {i} has decreased from {data[i-1]} to {data[i]}.")
+                else:
+                    result.append(ticks[0])  # down arrow
             else:
-                result.append(ticks[1])  # right arrow for no change
+                if verbose:
+                    result.append(f"Data point {i} has remained the same at {data[i]}.")
+                else:
+                    result.append(ticks[1])  # right arrow for no change
         return result
 
-    min_data = min(data)
-    range_data = (max(data) - min_data) / (len(ticks) - 1)
+    else:
+        min_data = min(data)
+        range_data = (max(data) - min_data) / (len(ticks) - 1)
+        if range_data == 0:
+            return [ticks[0] for _ in data]
+        else:
+            result = [ticks[int(round((value - min_data) / range_data))] for value in data]
+            if verbose:
+                result = [f"Data point {i} is {value}." for i, value in enumerate(result)]
+            return result
 
-    if range_data == 0:
-        return [ticks[0] for _ in data]
 
-    return [ticks[int(round((value - min_data) / range_data))] for value in data]
-
-
-def print_ansi_spark(data_points):
+def print_ansi_spark(data_points, verbose=False):
     """
     Print the list of data points in the ANSI terminal.
 
     Args:
         d (list): A list of data points.
     """
-    print("".join(data_points))
+    if verbose:
+        print("\n".join(data_points))
+    else:
+        print("".join(data_points))
 
 
 def main():
@@ -113,9 +128,13 @@ def main():
         action="store_true",
         help="show statistics about the data",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="show verbose representation of the data",
+    )
     args = parser.parse_args()
-    print_ansi_spark(scale_data(args.numbers, TICKS_OPTIONS[args.ticks], args.ticks))
+    print_ansi_spark(scale_data(args.numbers, TICKS_OPTIONS[args.ticks], args.ticks, args.verbose), args.verbose)
 
     if args.stats:
-        print(print_stats(args.numbers))
         print(print_stats(args.numbers))

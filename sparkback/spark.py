@@ -76,14 +76,14 @@ def scale_data(data, ticks, ticks_style):
             else:
                 result.append(ticks[1])  # right arrow for no change
         return result
-    else:
-        m = min(data)
-        n = (max(data) - m) / (len(ticks) - 1)
 
-        if n == 0:
-            return (ticks[0] for t in data)
-        else:
-            return (ticks[int(round((t - m) / n))] for t in data)
+    min_data = min(data)
+    range_data = (max(data) - min_data) / (len(ticks) - 1)
+
+    if range_data == 0:
+        return [ticks[0] for _ in data]
+
+    return [ticks[int(round((value - min_data) / range_data))] for value in data]
 
 
 def print_ansi_spark(data_points):

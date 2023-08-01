@@ -3,7 +3,7 @@
 """
 This module provides functionalities to visualize numerical data in the terminal.
 
-It includes different styles of visualization represented by the TICKS_OPTIONS dictionary. 
+It includes different styles of visualization represented by the TICKS_OPTIONS dictionary.
 Data can be represented in default, block, ascii, numeric, braille, and arrows styles.
 
 The module can also compute and print basic statistics about the data if required.
@@ -86,14 +86,14 @@ def scale_data(data, ticks, ticks_style):
             return (ticks[int(round((t - m) / n))] for t in data)
 
 
-def print_ansi_spark(d):
+def print_ansi_spark(data_points):
     """
     Print the list of data points in the ANSI terminal.
 
     Args:
         d (list): A list of data points.
     """
-    print("".join(d))
+    print("".join(data_points))
 
 
 def main():
@@ -114,7 +114,6 @@ def main():
         help="show statistics about the data",
     )
     args = parser.parse_args()
-    TICKS_OPTIONS[args.ticks]
     print_ansi_spark(scale_data(args.numbers, TICKS_OPTIONS[args.ticks], args.ticks))
 
     if args.stats:

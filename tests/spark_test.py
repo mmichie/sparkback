@@ -3,8 +3,15 @@ import sparkback.spark as spark
 
 def test_scale_data_default():
     data = [1, 2, 3, 4, 5, 6, 7, 8]
-    style_instance = spark.DefaultStyle(spark.TICKS_OPTIONS["default"])
+    style_instance = spark.DefaultStyle()
     expected_output = ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
+    assert style_instance.scale_data(data) == expected_output
+
+
+def test_scale_data_block():
+    data = [1, 2, 3, 4, 5, 6, 7, 8]
+    style_instance = spark.BlockStyle()
+    expected_output = ["▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]
     assert style_instance.scale_data(data) == expected_output
 
 

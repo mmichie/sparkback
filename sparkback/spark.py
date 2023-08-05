@@ -52,13 +52,14 @@ def print_stats(data):
 
 
 class AbstractStyle:
+    ticks = None
+
     def scale_data(self, data, verbose=False):
         raise NotImplementedError
 
 
 class ArrowsStyle(AbstractStyle):
-    def __init__(self):
-        self.ticks = ("↓", "→", "↗", "↑")
+    ticks = ("↓", "→", "↗", "↑")
 
     def scale_data(self, data, verbose=False):
         result = []
@@ -73,8 +74,8 @@ class ArrowsStyle(AbstractStyle):
 
 
 class DefaultStyle(AbstractStyle):
-    def __init__(self, ticks):
-        self.ticks = ticks
+    def __init__(self):
+        self.ticks = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
 
     def scale_data(self, data, verbose=False):
         min_data = min(data)
@@ -88,6 +89,26 @@ class DefaultStyle(AbstractStyle):
             return scaled_data
 
 
+class BlockStyle(DefaultStyle):
+    def __init__(self):
+        self.ticks = ("▏", "▎", "▍", "▌", "▋", "▊", "▉", "█")
+
+
+class AsciiStyle(DefaultStyle):
+    def __init__(self):
+        self.ticks = (".", "o", "O", "#", "@")
+
+
+class NumericStyle(DefaultStyle):
+    def __init__(self):
+        self.ticks = ("1", "2", "3", "4", "5")
+
+
+class BrailleStyle(DefaultStyle):
+    def __init__(self):
+        self.ticks = ("⣀", "⣤", "⣶", "⣿")
+
+
 STYLES = {
     "default": DefaultStyle,
     "block": DefaultStyle,
@@ -96,6 +117,13 @@ STYLES = {
     "braille": DefaultStyle,
     "arrows": ArrowsStyle,
 }
+
+
+def get_style_instance(style):
+    if style in STYLES:
+        return STYLES[style]()
+    else:
+        raise ValueError(f"Invalid style: {style}")
 
 
 def print_ansi_spark(data_points, verbose=False):
@@ -119,7 +147,7 @@ def main():
     parser.add_argument("numbers", metavar="N", type=float, nargs="+", help="series of data to plot")
     parser.add_argument(
         "--ticks",
-        choices=TICKS_OPTIONS.keys(),
+        choices=STYLES.keys(),
         default="default",
         help="the style of ticks to use",
     )
@@ -135,7 +163,7 @@ def main():
     )
 
     args = parser.parse_args()
-    style_instance = STYLES[args.ticks]()
+    style_instance = get_style_instance(args.ticks)
     scaled_data = style_instance.scale_data(args.numbers)
 
     if args.verbose:

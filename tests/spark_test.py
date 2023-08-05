@@ -3,14 +3,14 @@ import sparkback.spark as spark
 
 def test_scale_data_default():
     data = [1, 2, 3, 4, 5, 6, 7, 8]
-    style_instance = spark.DefaultStyle()
+    style_instance = spark.DefaultStyle(spark.TICKS_OPTIONS["default"])
     expected_output = ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
     assert style_instance.scale_data(data) == expected_output
 
 
 def test_scale_data_block():
     data = [1, 2, 3, 4, 5, 6, 7, 8]
-    style_instance = spark.BlockStyle()
+    style_instance = spark.DefaultStyle(spark.TICKS_OPTIONS["block"])
     expected_output = ["▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]
     assert style_instance.scale_data(data) == expected_output
 
@@ -18,7 +18,7 @@ def test_scale_data_block():
 def test_scale_data_arrows():
     data = [1, 2, 3, 2, 2, 7, 6]
     style_instance = spark.ArrowsStyle()
-    expected_output = ["↑", "↑", "↓", "→", "↑", "↓"]
+    expected_output = ["→", "↑", "↑", "↓", "→", "↑", "↓"]
     assert style_instance.scale_data(data) == expected_output
 
 

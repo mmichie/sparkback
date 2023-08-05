@@ -20,6 +20,7 @@ Example usage:
 """
 import argparse
 import statistics
+from functools import partial
 
 # Dictionary of available options for data visualization
 TICKS_OPTIONS = {
@@ -62,7 +63,7 @@ class ArrowsStyle(AbstractStyle):
     ticks = ("↓", "→", "↗", "↑")
 
     def scale_data(self, data, verbose=False):
-        result = []
+        result = [self.ticks[1]]  # Assumes no change at start
         for i in range(1, len(data)):
             if data[i] > data[i - 1]:
                 result.append(self.ticks[3])  # up arrow
@@ -74,8 +75,8 @@ class ArrowsStyle(AbstractStyle):
 
 
 class DefaultStyle(AbstractStyle):
-    def __init__(self):
-        self.ticks = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
+    def __init__(self, ticks):
+        self.ticks = ticks
 
     def scale_data(self, data, verbose=False):
         min_data = min(data)
@@ -89,32 +90,12 @@ class DefaultStyle(AbstractStyle):
             return scaled_data
 
 
-class BlockStyle(DefaultStyle):
-    def __init__(self):
-        self.ticks = ("▏", "▎", "▍", "▌", "▋", "▊", "▉", "█")
-
-
-class AsciiStyle(DefaultStyle):
-    def __init__(self):
-        self.ticks = (".", "o", "O", "#", "@")
-
-
-class NumericStyle(DefaultStyle):
-    def __init__(self):
-        self.ticks = ("1", "2", "3", "4", "5")
-
-
-class BrailleStyle(DefaultStyle):
-    def __init__(self):
-        self.ticks = ("⣀", "⣤", "⣶", "⣿")
-
-
 STYLES = {
-    "default": DefaultStyle,
-    "block": DefaultStyle,
-    "ascii": DefaultStyle,
-    "numeric": DefaultStyle,
-    "braille": DefaultStyle,
+    "default": partial(DefaultStyle, TICKS_OPTIONS["default"]),
+    "block": partial(DefaultStyle, TICKS_OPTIONS["block"]),
+    "ascii": partial(DefaultStyle, TICKS_OPTIONS["ascii"]),
+    "numeric": partial(DefaultStyle, TICKS_OPTIONS["numeric"]),
+    "braille": partial(DefaultStyle, TICKS_OPTIONS["braille"]),
     "arrows": ArrowsStyle,
 }
 
@@ -131,7 +112,7 @@ def print_ansi_spark(data_points, verbose=False):
     Print the list of data points in the ANSI terminal.
 
     Args:
-        d (list): A list of data points.
+        data_points (list): A list of data points.
     """
     if verbose:
         print("\n".join(data_points))
@@ -164,20 +145,13 @@ def main():
 
     args = parser.parse_args()
     style_instance = get_style_instance(args.ticks)
-    scaled_data = style_instance.scale_data(args.numbers)
-
-    if args.verbose:
-        for i, point in enumerate(args.numbers[1:], start=1):
-            change_type = (
-                "increased"
-                if scaled_data[i] == style_instance.ticks[3]
-                else "decreased"
-                if scaled_data[i] == style_instance.ticks[0]
-                else "remained the same"
-            )
-            print(f"Data point {i} has {change_type} from {args.numbers[i-1]} to {point}.")
-    else:
-        print_ansi_spark(scaled_data)
+    scaled_data = style_instance.scale_data(args.numbers, verbose=args.verbose)
 
     if args.stats:
         print(print_stats(args.numbers))
+
+    print_ansi_spark(scaled_data, verbose=args.verbose)
+
+
+if __name__ == "__main__":
+    main()

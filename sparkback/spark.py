@@ -43,6 +43,12 @@ def print_stats(data):
     Returns:
         str: A string of formatted statistics.
     """
+    if not data:
+        raise ValueError("Data should not be empty")
+
+    if not all(isinstance(item, (int, float)) for item in data):
+        raise ValueError("All data points should be numeric")
+
     stats_str = (
         f"Minimum: {min(data)}\n"
         f"Maximum: {max(data)}\n"
@@ -53,41 +59,43 @@ def print_stats(data):
 
 
 class AbstractStyle:
-    ticks = None
+    TICKS = None
 
     def scale_data(self, data, verbose=False):
         raise NotImplementedError
 
 
 class ArrowsStyle(AbstractStyle):
-    ticks = ("↓", "→", "↗", "↑")
+    TICKS = ("↓", "→", "↗", "↑")
 
     def scale_data(self, data, verbose=False):
-        result = [self.ticks[1]]  # Assumes no change at start
+        result = [self.TICKS[1]]  # Assumes no change at start
         for i in range(1, len(data)):
             if data[i] > data[i - 1]:
-                result.append(self.ticks[3])  # up arrow
+                result.append(self.TICKS[3])  # up arrow
             elif data[i] < data[i - 1]:
-                result.append(self.ticks[0])  # down arrow
+                result.append(self.TICKS[0])  # down arrow
             else:
-                result.append(self.ticks[1])  # right arrow for no change
+                result.append(self.TICKS[1])  # right arrow for no change
         return result
 
 
 class DefaultStyle(AbstractStyle):
     def __init__(self, ticks):
-        self.ticks = ticks
+        self.TICKS = ticks
 
     def scale_data(self, data, verbose=False):
         min_data = min(data)
-        range_data = (max(data) - min_data) / (len(self.ticks) - 1)
+        range_data = (max(data) - min_data) / (len(self.TICKS) - 1)
         if range_data == 0:
-            return [self.ticks[0] for _ in data]
+            return [self.TICKS[0] for _ in data]
         else:
-            scaled_data = [self.ticks[int(round((value - min_data) / range_data))] for value in data]
-            if verbose:
-                return [f"Data point {i} is {value}." for i, value in enumerate(scaled_data)]
-            return scaled_data
+            scaled_data = [self.TICKS[int(round((value - min_data) / range_data))] for value in data]
+            return self.verbose_output(scaled_data) if verbose else scaled_data
+
+    @staticmethod
+    def verbose_output(scaled_data):
+        return [f"Data point {i} is {value}." for i, value in enumerate(scaled_data)]
 
 
 STYLES = {
@@ -120,10 +128,7 @@ def print_ansi_spark(data_points, verbose=False):
         print("".join(data_points))
 
 
-def main():
-    """
-    Main function that parses command line arguments and calls the corresponding functions.
-    """
+def get_args():
     parser = argparse.ArgumentParser(description="Process numbers")
     parser.add_argument("numbers", metavar="N", type=float, nargs="+", help="series of data to plot")
     parser.add_argument(
@@ -142,8 +147,14 @@ def main():
         action="store_true",
         help="show verbose representation of the data",
     )
+    return parser.parse_args()
 
-    args = parser.parse_args()
+
+def main():
+    """
+    Main function that parses command line arguments and calls the corresponding functions.
+    """
+    args = get_args()
     style_instance = get_style_instance(args.ticks)
     scaled_data = style_instance.scale_data(args.numbers, verbose=args.verbose)
 

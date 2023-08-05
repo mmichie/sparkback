@@ -49,6 +49,9 @@ def print_stats(data):
     if not all(isinstance(item, (int, float)) for item in data):
         raise ValueError("All data points should be numeric")
 
+    if len(data) == 1:
+        raise ValueError("At least two data points are required to compute statistics")
+
     stats_str = (
         f"Minimum: {min(data)}\n"
         f"Maximum: {max(data)}\n"

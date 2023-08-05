@@ -20,17 +20,6 @@ Example usage:
 """
 import argparse
 import statistics
-from functools import partial
-
-# Dictionary of available options for data visualization
-TICKS_OPTIONS = {
-    "default": ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"),
-    "block": ("▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"),
-    "ascii": (".", "o", "O", "#", "@"),
-    "numeric": ("1", "2", "3", "4", "5"),
-    "braille": ("⣀", "⣤", "⣶", "⣿"),
-    "arrows": ("↓", "→", "↗", "↑"),
-}
 
 
 def print_stats(data):
@@ -84,8 +73,7 @@ class ArrowsStyle(AbstractStyle):
 
 
 class DefaultStyle(AbstractStyle):
-    def __init__(self, ticks):
-        self.TICKS = ticks
+    TICKS = ("▁", "▂", "▃", "▄", "▅", "▆", "▇", "█")
 
     def scale_data(self, data, verbose=False):
         min_data = min(data)
@@ -101,12 +89,28 @@ class DefaultStyle(AbstractStyle):
         return [f"Data point {i} is {value}." for i, value in enumerate(scaled_data)]
 
 
+class BlockStyle(DefaultStyle):
+    TICKS = ("▏", "▎", "▍", "▌", "▋", "▊", "▉", "█")
+
+
+class AsciiStyle(DefaultStyle):
+    TICKS = (".", "o", "O", "#", "@")
+
+
+class NumericStyle(DefaultStyle):
+    TICKS = ("1", "2", "3", "4", "5")
+
+
+class BrailleStyle(DefaultStyle):
+    TICKS = ("⣀", "⣤", "⣶", "⣿")
+
+
 STYLES = {
-    "default": partial(DefaultStyle, TICKS_OPTIONS["default"]),
-    "block": partial(DefaultStyle, TICKS_OPTIONS["block"]),
-    "ascii": partial(DefaultStyle, TICKS_OPTIONS["ascii"]),
-    "numeric": partial(DefaultStyle, TICKS_OPTIONS["numeric"]),
-    "braille": partial(DefaultStyle, TICKS_OPTIONS["braille"]),
+    "default": DefaultStyle,
+    "block": BlockStyle,
+    "ascii": AsciiStyle,
+    "numeric": NumericStyle,
+    "braille": BrailleStyle,
     "arrows": ArrowsStyle,
 }
 

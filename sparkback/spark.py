@@ -51,48 +51,51 @@ def print_stats(data):
     return stats_str
 
 
-def scale_data(data, ticks, ticks_style, verbose=False):
-    """
-    Scale the data according to the selected ticks style.
+class AbstractStyle:
+    def scale_data(self, data, verbose=False):
+        raise NotImplementedError
 
-    Args:
-        data (list): A list of numerical data.
-        ticks (tuple): A tuple of characters representing the ticks.
-        ticks_style (str): A string representing the style of ticks to use.
 
-    Returns:
-        list: A list of ticks representing the scaled data.
-    """
-    if ticks_style == "arrows":
+class ArrowsStyle(AbstractStyle):
+    def __init__(self):
+        self.ticks = ("↓", "→", "↗", "↑")
+
+    def scale_data(self, data, verbose=False):
         result = []
         for i in range(1, len(data)):
             if data[i] > data[i - 1]:
-                if verbose:
-                    result.append(f"Data point {i} has increased from {data[i-1]} to {data[i]}.")
-                else:
-                    result.append(ticks[3])  # up arrow
+                result.append(self.ticks[3])  # up arrow
             elif data[i] < data[i - 1]:
-                if verbose:
-                    result.append(f"Data point {i} has decreased from {data[i-1]} to {data[i]}.")
-                else:
-                    result.append(ticks[0])  # down arrow
+                result.append(self.ticks[0])  # down arrow
             else:
-                if verbose:
-                    result.append(f"Data point {i} has remained the same at {data[i]}.")
-                else:
-                    result.append(ticks[1])  # right arrow for no change
+                result.append(self.ticks[1])  # right arrow for no change
         return result
 
-    else:
+
+class DefaultStyle(AbstractStyle):
+    def __init__(self, ticks):
+        self.ticks = ticks
+
+    def scale_data(self, data, verbose=False):
         min_data = min(data)
-        range_data = (max(data) - min_data) / (len(ticks) - 1)
+        range_data = (max(data) - min_data) / (len(self.ticks) - 1)
         if range_data == 0:
-            return [ticks[0] for _ in data]
+            return [self.ticks[0] for _ in data]
         else:
-            result = [ticks[int(round((value - min_data) / range_data))] for value in data]
+            scaled_data = [self.ticks[int(round((value - min_data) / range_data))] for value in data]
             if verbose:
-                result = [f"Data point {i} is {value}." for i, value in enumerate(result)]
-            return result
+                return [f"Data point {i} is {value}." for i, value in enumerate(scaled_data)]
+            return scaled_data
+
+
+STYLES = {
+    "default": DefaultStyle,
+    "block": DefaultStyle,
+    "ascii": DefaultStyle,
+    "numeric": DefaultStyle,
+    "braille": DefaultStyle,
+    "arrows": ArrowsStyle,
+}
 
 
 def print_ansi_spark(data_points, verbose=False):
@@ -130,8 +133,23 @@ def main():
         action="store_true",
         help="show verbose representation of the data",
     )
+
     args = parser.parse_args()
-    print_ansi_spark(scale_data(args.numbers, TICKS_OPTIONS[args.ticks], args.ticks, args.verbose), args.verbose)
+    style_instance = STYLES[args.ticks]()
+    scaled_data = style_instance.scale_data(args.numbers)
+
+    if args.verbose:
+        for i, point in enumerate(args.numbers[1:], start=1):
+            change_type = (
+                "increased"
+                if scaled_data[i] == style_instance.ticks[3]
+                else "decreased"
+                if scaled_data[i] == style_instance.ticks[0]
+                else "remained the same"
+            )
+            print(f"Data point {i} has {change_type} from {args.numbers[i-1]} to {point}.")
+    else:
+        print_ansi_spark(scaled_data)
 
     if args.stats:
         print(print_stats(args.numbers))

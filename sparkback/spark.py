@@ -152,6 +152,36 @@ class BrailleStyle(DefaultStyle):
     TICKS = ("⣀", "⣤", "⣶", "⣿")
 
 
+class MultiLineGraphStyle(AbstractStyle):
+    """
+    A style class that represents data as a multiline graph using Unicode characters.
+    """
+
+    def scale_data(self, data, verbose=False):
+        min_data = min(data)
+        max_data = max(data)
+        range_data = max_data - min_data
+        graph_height = 10  # Set graph height to 10 lines for better visibility
+
+        if range_data == 0:
+            return [["─" * len(data)] * graph_height]  # Uniform line if no variation
+
+        scaled_data = [int((value - min_data) / range_data * (graph_height - 1)) for value in data]
+
+        # Initialize the graph canvas
+        graph = [[" " for _ in range(len(data))] for _ in range(graph_height)]
+
+        # Place the points on the graph
+        for idx, height in enumerate(scaled_data):
+            for y in range(graph_height):
+                graph[y][idx] = "█" if y >= graph_height - height else " "
+
+        return graph
+
+    def __str__(self):
+        return "Multiline Graph Style"
+
+
 STYLES = {
     "default": DefaultStyle,
     "block": BlockStyle,
@@ -159,20 +189,32 @@ STYLES = {
     "numeric": NumericStyle,
     "braille": BrailleStyle,
     "arrows": ArrowsStyle,
+    "multiline": MultiLineGraphStyle,
 }
 
 
-def print_ansi_spark(data_points, verbose=False):
+def print_ansi_spark(data_points, verbose=False, style=None):
     """
-    Print the list of data points in the ANSI terminal.
+    Print the list of data points in the ANSI terminal, formatted according to the specified style.
 
     Args:
-        data_points (list): A list of data points.
+        data_points (list or list of lists): A list of data points or a list of lists for multiline graphs.
+        verbose (bool): Whether to print verbose output.
+        style (str): The style of the graph, which could influence formatting details.
     """
-    if verbose:
-        print("\n".join(data_points))
+    if isinstance(data_points[0], list):
+        if verbose:
+            for index, line in enumerate(data_points):
+                print(f"Line {index+1}: {''.join(line)}")
+        else:
+            for line in data_points:
+                print("".join(line))
     else:
-        print("".join(data_points))
+        if verbose:
+            for index, point in enumerate(data_points):
+                print(f"Point {index+1}: {point}")
+        else:
+            print("".join(data_points))
 
 
 def get_style_instance(style):

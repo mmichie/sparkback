@@ -3,6 +3,13 @@ sparkback
 
 A Python library for generating sparklines.
 
+## Installation
+
+```
+$ poetry install
+$ poetry shell
+$ bin/spark --help
+```
 
 ## Usage
 You can use sparkback from the command line or in your Python scripts.

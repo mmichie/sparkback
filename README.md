@@ -6,9 +6,8 @@ A Python library for generating sparklines.
 ## Installation
 
 ```
-$ poetry install
-$ poetry shell
-$ bin/spark --help
+$ uv sync --all-extras
+$ uv run spark --help
 ```
 
 ## Usage

@@ -9,16 +9,15 @@ Sparkback is a Python library for generating sparklines in the terminal using va
 ## Development Setup
 
 ```bash
-poetry install
-poetry shell
+uv sync --all-extras
 ```
 
 ## Common Commands
 
 ### Running the CLI
 ```bash
-# Using Poetry script entry point
-spark --ticks default 10 20 30 40 50
+# Using uv run
+uv run spark --ticks default 10 20 30 40 50
 
 # Or directly via bin/spark
 bin/spark --ticks default 10 20 30 40 50
@@ -27,25 +26,25 @@ bin/spark --ticks default 10 20 30 40 50
 ### Testing
 ```bash
 # Run all tests
-pytest
+uv run pytest
 
 # Run a specific test
-pytest tests/spark_test.py::test_scale_data_default
+uv run pytest tests/spark_test.py::test_scale_data_default
 ```
 
 ### Linting and Formatting
 ```bash
 # Format code with Black
-black sparkback/ tests/
+uv run black sparkback/ tests/
 
 # Run linters (all configured for 120 character line length)
-flake8 sparkback/ tests/
-pylint sparkback/
+uv run flake8 sparkback/ tests/
+uv run pylint sparkback/
 ```
 
 ### Building
 ```bash
-poetry build
+uv build
 ```
 
 ## Architecture

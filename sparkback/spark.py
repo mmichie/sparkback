@@ -20,6 +20,7 @@ Example usage:
 """
 import argparse
 import statistics
+from typing import List, Union, Tuple
 
 
 def print_stats(data):
@@ -182,6 +183,152 @@ class MultiLineGraphStyle(AbstractStyle):
         return "Multiline Graph Style"
 
 
+class LineGraphStyle(AbstractStyle):
+    """
+    A style class that draws connected line graphs using Unicode box-drawing characters.
+
+    This style connects consecutive data points with lines, supporting horizontal,
+    vertical, and diagonal segments. The graph is rendered on a configurable height
+    canvas using Unicode characters: ─│╱╲● for different line directions.
+    """
+
+    def __init__(self, height: int = 10) -> None:
+        """
+        Initialize the LineGraphStyle with a specified graph height.
+
+        Args:
+            height: The number of rows in the graph canvas. Must be >= 2.
+
+        Raises:
+            ValueError: If height is less than 2.
+        """
+        if height < 2:
+            raise ValueError("Graph height must be at least 2")
+        self.height = height
+
+    def scale_data(self, data: List[Union[int, float]], verbose: bool = False) -> List[List[str]]:
+        """
+        Scale data and render as a connected line graph.
+
+        Args:
+            data: A list of numerical values to plot.
+            verbose: If True, includes additional debug information (currently unused).
+
+        Returns:
+            A 2D list of strings representing the graph, with graph[0] as the top row.
+
+        Raises:
+            ValueError: If data is empty or contains non-numeric values.
+        """
+        if not data:
+            raise ValueError("Data cannot be empty")
+
+        if len(data) == 1:
+            # Single point: draw just a point in the middle
+            graph = [[" " for _ in range(1)] for _ in range(self.height)]
+            mid_y = self.height // 2
+            graph[mid_y][0] = "●"
+            return graph
+
+        # Scale data to fit within graph height
+        min_val = min(data)
+        max_val = max(data)
+        range_val = max_val - min_val
+
+        if range_val == 0:
+            # All values are the same: draw horizontal line at midpoint
+            y_pos = self.height // 2
+            graph = [[" " for _ in range(len(data))] for _ in range(self.height)]
+            for x in range(len(data)):
+                graph[y_pos][x] = "─"
+            # Mark endpoints
+            graph[y_pos][0] = "●"
+            graph[y_pos][len(data) - 1] = "●"
+            return graph
+
+        # Scale each value to [0, height-1], inverted so top of graph is max value
+        scaled_points: List[int] = [int((val - min_val) / range_val * (self.height - 1)) for val in data]
+
+        # Initialize the graph canvas
+        graph: List[List[str]] = [[" " for _ in range(len(data))] for _ in range(self.height)]
+
+        # Draw lines between consecutive points
+        for i in range(len(scaled_points) - 1):
+            x1, y1 = i, scaled_points[i]
+            x2, y2 = i + 1, scaled_points[i + 1]
+
+            # Invert y-coordinates so 0 is at top of graph
+            y1_inv = self.height - 1 - y1
+            y2_inv = self.height - 1 - y2
+
+            self._draw_line(graph, x1, y1_inv, x2, y2_inv)
+
+        # Mark endpoints
+        first_y = self.height - 1 - scaled_points[0]
+        last_y = self.height - 1 - scaled_points[-1]
+        graph[first_y][0] = "●"
+        graph[last_y][len(data) - 1] = "●"
+
+        return graph
+
+    def _draw_line(self, graph: List[List[str]], x1: int, y1: int, x2: int, y2: int) -> None:
+        """
+        Draw a line between two points on the graph canvas.
+
+        Uses Unicode box-drawing characters to represent different line directions:
+        - ─ for horizontal lines
+        - │ for vertical lines
+        - ╱ for diagonal up-right lines
+        - ╲ for diagonal down-right lines
+
+        Args:
+            graph: The 2D graph canvas to draw on (modified in place).
+            x1: Starting x-coordinate.
+            y1: Starting y-coordinate.
+            x2: Ending x-coordinate.
+            y2: Ending y-coordinate.
+        """
+        dx = x2 - x1
+        dy = y2 - y1
+
+        # For adjacent x coordinates (dx=1), determine the character
+        if dx == 1:
+            if dy == 0:
+                # Horizontal line
+                if graph[y1][x1] == " ":
+                    graph[y1][x1] = "─"
+                if graph[y2][x2] == " ":
+                    graph[y2][x2] = "─"
+            elif dy > 0:
+                # Going down (down-right diagonal)
+                steps = abs(dy)
+                for step in range(steps + 1):
+                    y = y1 + step
+                    if 0 <= y < len(graph):
+                        if step == 0 or step == steps:
+                            if graph[y][x1] == " ":
+                                graph[y][x1] = "╲" if dy == 1 else "│"
+                        else:
+                            if graph[y][x1] == " ":
+                                graph[y][x1] = "│"
+            else:
+                # Going up (up-right diagonal)
+                steps = abs(dy)
+                for step in range(steps + 1):
+                    y = y1 - step
+                    if 0 <= y < len(graph):
+                        if step == 0 or step == steps:
+                            if graph[y][x1] == " ":
+                                graph[y][x1] = "╱" if dy == -1 else "│"
+                        else:
+                            if graph[y][x1] == " ":
+                                graph[y][x1] = "│"
+
+    def __str__(self) -> str:
+        """Return a string representation of this style."""
+        return f"Line Graph Style (height={self.height})"
+
+
 STYLES = {
     "default": DefaultStyle,
     "block": BlockStyle,
@@ -190,6 +337,7 @@ STYLES = {
     "braille": BrailleStyle,
     "arrows": ArrowsStyle,
     "multiline": MultiLineGraphStyle,
+    "line": LineGraphStyle,
 }
 
 

@@ -30,6 +30,8 @@ spark --ticks ascii 10 20 30 40 50
 spark --ticks numeric 10 20 30 40 50
 spark --ticks braille 10 20 30 40 50
 spark --ticks arrows 10 20 30 40 50
+spark --ticks line 10 20 30 40 50
+spark --ticks multiline 10 20 30 40 50
 ```
 
 Use the --stats option to display statistics about your data:

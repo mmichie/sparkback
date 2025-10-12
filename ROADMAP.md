@@ -13,13 +13,15 @@ This roadmap outlines the path to adding btop-style real-time monitoring capabil
 
 **Goal**: Better line graph visualization with connected points
 
-- [ ] Add `LineGraphStyle` class that connects data points with lines
-  - Use Unicode box-drawing characters (─│┌┐└┘├┤┬┴┼)
+- [x] Add `LineGraphStyle` class that connects data points with lines
+  - Use Unicode box-drawing characters (─│╱╲●)
   - Support diagonal connections (╱╲)
+  - Configurable graph height (default: 10 lines)
+  - Full type hints and comprehensive test coverage
 - [ ] Add `SmoothLineGraphStyle` using Braille patterns for sub-character resolution
 - [ ] Support multiple line styles: stepped, linear interpolation, bezier curves
 - [ ] Add grid rendering (optional background grid)
-- [ ] Add configurable graph height (not just fixed 10 lines)
+- [ ] Add corner characters (┌┐└┘) for better line joining
 
 **Deliverable**: `spark --ticks line 1 5 3 8 2 9 4` renders a connected line graph
 

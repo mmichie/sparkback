@@ -189,16 +189,17 @@ def main():
             # Show up to 8 cores, 2 per row
             cores_per_row = 2
             for row_start in range(0, min(monitor.cpu_count, 8), cores_per_row):
-                # First line of graphs
+                # Graph lines (3 rows per graph)
                 line1_parts = []
                 line2_parts = []
+                line3_parts = []
 
                 for i in range(row_start, min(row_start + cores_per_row, monitor.cpu_count, 8)):
                     history = monitor.cpu_histories[i]
                     current = history[-1] if history else 0
                     color = get_color_for_value(current)
 
-                    graph_lines = render_graph(history, height=2, color_scheme="gradient")
+                    graph_lines = render_graph(history, height=3, color_scheme="gradient")
 
                     label = f"{CYAN}CPU{i:<2}{ANSI_RESET}"
                     bar = format_bar(current, 8, color)
@@ -206,9 +207,11 @@ def main():
 
                     line1_parts.append(f"{label}[{bar}]{pct} {graph_lines[0]}")
                     line2_parts.append(f"{'':21}{graph_lines[1]}")
+                    line3_parts.append(f"{'':21}{graph_lines[2]}")
 
                 print("  ".join(line1_parts))
                 print("  ".join(line2_parts))
+                print("  ".join(line3_parts))
 
             if monitor.cpu_count > 8:
                 print(f"{DIM}  ... and {monitor.cpu_count - 8} more cores{ANSI_RESET}")
@@ -222,7 +225,7 @@ def main():
             mem = psutil.virtual_memory()
             swap = psutil.swap_memory()
 
-            mem_graph = render_graph(monitor.mem_history, height=2, color_scheme="cyan")
+            mem_graph = render_graph(monitor.mem_history, height=3, color_scheme="cyan")
             mem_color = get_color_for_value(mem.percent, 60, 85)
             mem_used_gb = mem.used / 1024 / 1024 / 1024
             mem_total_gb = mem.total / 1024 / 1024 / 1024
@@ -231,8 +234,9 @@ def main():
                   f"{mem_color}{mem.percent:5.1f}%{ANSI_RESET} "
                   f"{DIM}{mem_used_gb:.1f}/{mem_total_gb:.1f}GB{ANSI_RESET}  {mem_graph[0]}")
             print(f"{'':42}{mem_graph[1]}")
+            print(f"{'':42}{mem_graph[2]}")
 
-            swap_graph = render_graph(monitor.swap_history, height=2, color_scheme="magenta")
+            swap_graph = render_graph(monitor.swap_history, height=3, color_scheme="magenta")
             swap_color = get_color_for_value(swap.percent, 30, 60)
             swap_used_gb = swap.used / 1024 / 1024 / 1024
             swap_total_gb = swap.total / 1024 / 1024 / 1024
@@ -241,6 +245,7 @@ def main():
                   f"{swap_color}{swap.percent:5.1f}%{ANSI_RESET} "
                   f"{DIM}{swap_used_gb:.1f}/{swap_total_gb:.1f}GB{ANSI_RESET}  {swap_graph[0]}")
             print(f"{'':42}{swap_graph[1]}")
+            print(f"{'':42}{swap_graph[2]}")
 
             print()
 
@@ -248,16 +253,18 @@ def main():
             print(f"{BOLD}{WHITE}Network I/O{ANSI_RESET}")
             print(f"{DIM}{'─' * 72}{ANSI_RESET}")
 
-            net_in_graph = render_graph(monitor.net_in_history, height=2, color_scheme="green")
-            net_out_graph = render_graph(monitor.net_out_history, height=2, color_scheme="blue")
+            net_in_graph = render_graph(monitor.net_in_history, height=3, color_scheme="green")
+            net_out_graph = render_graph(monitor.net_out_history, height=3, color_scheme="blue")
 
             current_in = monitor.net_in_history[-1] if monitor.net_in_history else 0
             current_out = monitor.net_out_history[-1] if monitor.net_out_history else 0
 
             print(f"{GREEN}▼ In {ANSI_RESET} {format_bytes(current_in):>12}  {net_in_graph[0]}")
             print(f"{'':20}{net_in_graph[1]}")
+            print(f"{'':20}{net_in_graph[2]}")
             print(f"{BLUE}▲ Out{ANSI_RESET} {format_bytes(current_out):>12}  {net_out_graph[0]}")
             print(f"{'':20}{net_out_graph[1]}")
+            print(f"{'':20}{net_out_graph[2]}")
 
             print()
 

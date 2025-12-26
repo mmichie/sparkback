@@ -489,8 +489,9 @@ class BrailleLineGraphStyle(AbstractStyle):
             raise ValueError("Data cannot be empty")
 
         # Pixel dimensions: each braille char is 2 wide x 4 tall
+        # Use 1 pixel per data point for smooth, natural-looking graphs
         pixel_height = self.height * 4
-        pixel_width = len(data) * 2
+        pixel_width = len(data)
 
         # Create pixel canvas (False = empty, True = filled)
         canvas: List[List[bool]] = [[False for _ in range(pixel_width)] for _ in range(pixel_height)]
@@ -510,8 +511,8 @@ class BrailleLineGraphStyle(AbstractStyle):
             # Map to [0, pixel_height-1], then invert so top = max
             scaled_points: List[Tuple[int, int]] = []
             for i, val in enumerate(data):
-                # x-coordinate: center of each 2-pixel-wide column
-                x = i * 2
+                # x-coordinate: 1 pixel per data point
+                x = i
                 # y-coordinate: scaled and inverted
                 y_normalized = (val - min_val) / range_val
                 y = int((1 - y_normalized) * (pixel_height - 1))

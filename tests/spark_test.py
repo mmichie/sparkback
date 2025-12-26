@@ -356,8 +356,9 @@ class TestBrailleLineGraphStyle:
         # Height should match
         assert len(result) == 4, "Graph should have correct height"
 
-        # Width should be ceil(len(data) * 2 / 2) = len(data)
-        expected_width = 6  # ceil(6 * 2 / 2) = 6
+        # Width is ceil(len(data) / 2) since each braille char is 2 pixels wide
+        # and we use 1 pixel per data point
+        expected_width = 3  # ceil(6 / 2) = 3
         assert all(len(row) == expected_width for row in result), "All rows should have correct width"
 
     def test_braille_range(self):
@@ -407,7 +408,8 @@ class TestBrailleLineGraphStyle:
         result = style.scale_data([1, 2, 3])
 
         assert len(result) == 1
-        assert len(result[0]) == 3
+        # Width is ceil(3 / 2) = 2 braille characters
+        assert len(result[0]) == 2
 
 
 # Color Support Tests

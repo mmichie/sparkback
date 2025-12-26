@@ -455,13 +455,15 @@ class BrailleLineGraphStyle(AbstractStyle):
         [0x40, 0x80],  # row 3: dots 7,8
     ]
 
-    def __init__(self, height: int = 10) -> None:
+    def __init__(self, height: int = 10, filled: bool = False) -> None:
         """
         Initialize the BrailleLineGraphStyle with a specified graph height.
 
         Args:
             height: The number of braille character rows. Each row provides
                    4 pixels of vertical resolution. Must be >= 1.
+            filled: If True, fills the area below the line (area chart style).
+                   If False, draws only the line (default).
 
         Raises:
             ValueError: If height is less than 1.
@@ -469,6 +471,7 @@ class BrailleLineGraphStyle(AbstractStyle):
         if height < 1:
             raise ValueError("Graph height must be at least 1")
         self.height = height
+        self.filled = filled
 
     def scale_data(self, data: List[Union[int, float]], verbose: bool = False) -> List[List[str]]:
         """
@@ -505,7 +508,12 @@ class BrailleLineGraphStyle(AbstractStyle):
             # All values are the same: draw horizontal line at midpoint
             mid_y = pixel_height // 2
             for x in range(pixel_width):
-                canvas[mid_y][x] = True
+                if self.filled:
+                    # Fill from midpoint to bottom
+                    for fill_y in range(mid_y, pixel_height):
+                        canvas[fill_y][x] = True
+                else:
+                    canvas[mid_y][x] = True
         else:
             # Scale each value to pixel coordinates
             # Map to [0, pixel_height-1], then invert so top = max
@@ -518,17 +526,24 @@ class BrailleLineGraphStyle(AbstractStyle):
                 y = int((1 - y_normalized) * (pixel_height - 1))
                 scaled_points.append((x, y))
 
-            # Draw lines between consecutive points
-            for i in range(len(scaled_points) - 1):
-                x1, y1 = scaled_points[i]
-                x2, y2 = scaled_points[i + 1]
-                self._draw_line(canvas, x1, y1, x2, y2)
+            if self.filled:
+                # Fill area below each data point
+                for x, y in scaled_points:
+                    for fill_y in range(y, pixel_height):
+                        if 0 <= fill_y < pixel_height and 0 <= x < pixel_width:
+                            canvas[fill_y][x] = True
+            else:
+                # Draw lines between consecutive points
+                for i in range(len(scaled_points) - 1):
+                    x1, y1 = scaled_points[i]
+                    x2, y2 = scaled_points[i + 1]
+                    self._draw_line(canvas, x1, y1, x2, y2)
 
-            # For single point, just draw the dot
-            if len(scaled_points) == 1:
-                x, y = scaled_points[0]
-                if 0 <= y < pixel_height and 0 <= x < pixel_width:
-                    canvas[y][x] = True
+                # For single point, just draw the dot
+                if len(scaled_points) == 1:
+                    x, y = scaled_points[0]
+                    if 0 <= y < pixel_height and 0 <= x < pixel_width:
+                        canvas[y][x] = True
 
         return self._canvas_to_braille(canvas)
 

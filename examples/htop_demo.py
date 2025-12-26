@@ -112,7 +112,7 @@ def render_graph(data: list, height: int = 2, color_scheme: str = "gradient") ->
     else:
         padded_data = data
 
-    style = BrailleLineGraphStyle(height=height)
+    style = BrailleLineGraphStyle(height=height, filled=True)
     graph = style.scale_data(padded_data)
     colored = apply_color_to_output(graph, padded_data, color_scheme)
     return ["".join(row) for row in colored]

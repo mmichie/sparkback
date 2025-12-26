@@ -250,3 +250,161 @@ class TestLineGraphStyle:
         # Should not raise an error
         result = style.scale_data([1, 2, 3], verbose=True)
         assert result is not None
+
+
+# BrailleLineGraphStyle Tests
+
+class TestBrailleLineGraphStyle:
+    """Comprehensive tests for BrailleLineGraphStyle class."""
+
+    def test_init_default_height(self):
+        """Test initialization with default height."""
+        style = spark.BrailleLineGraphStyle()
+        assert style.height == 10
+
+    def test_init_custom_height(self):
+        """Test initialization with custom height."""
+        style = spark.BrailleLineGraphStyle(height=5)
+        assert style.height == 5
+
+    def test_init_invalid_height(self):
+        """Test initialization with invalid height raises ValueError."""
+        with pytest.raises(ValueError, match="Graph height must be at least 1"):
+            spark.BrailleLineGraphStyle(height=0)
+
+    def test_empty_data_raises_error(self):
+        """Test that empty data raises ValueError."""
+        style = spark.BrailleLineGraphStyle()
+        with pytest.raises(ValueError, match="Data cannot be empty"):
+            style.scale_data([])
+
+    def test_single_data_point(self):
+        """Test rendering a single data point."""
+        style = spark.BrailleLineGraphStyle(height=3)
+        result = style.scale_data([42])
+
+        # Should have height rows
+        assert len(result) == 3
+        # Width should be 1 (1 data point = 2 pixels, but ceiling(2/2) = 1 char)
+        assert len(result[0]) == 1
+
+        # All characters should be braille (U+2800-U+28FF)
+        for row in result:
+            for char in row:
+                assert 0x2800 <= ord(char) <= 0x28FF, f"Character {char} should be braille"
+
+    def test_flat_line_all_same_values(self):
+        """Test rendering when all values are the same."""
+        style = spark.BrailleLineGraphStyle(height=4)
+        result = style.scale_data([5, 5, 5, 5])
+
+        assert len(result) == 4
+
+        # All characters should be braille
+        for row in result:
+            for char in row:
+                assert 0x2800 <= ord(char) <= 0x28FF
+
+        # Should have some non-empty braille characters (not all U+2800)
+        non_empty_count = sum(1 for row in result for char in row if ord(char) != 0x2800)
+        assert non_empty_count > 0, "Flat line should have some filled dots"
+
+    def test_increasing_line(self):
+        """Test rendering an increasing line."""
+        style = spark.BrailleLineGraphStyle(height=5)
+        result = style.scale_data([1, 2, 3, 4, 5])
+
+        assert len(result) == 5
+
+        # All characters should be braille
+        for row in result:
+            for char in row:
+                assert 0x2800 <= ord(char) <= 0x28FF
+
+        # Should have filled dots (non-empty chars)
+        non_empty_count = sum(1 for row in result for char in row if ord(char) != 0x2800)
+        assert non_empty_count > 0, "Increasing line should have filled dots"
+
+    def test_decreasing_line(self):
+        """Test rendering a decreasing line."""
+        style = spark.BrailleLineGraphStyle(height=5)
+        result = style.scale_data([5, 4, 3, 2, 1])
+
+        assert len(result) == 5
+
+        # All characters should be braille
+        for row in result:
+            for char in row:
+                assert 0x2800 <= ord(char) <= 0x28FF
+
+    def test_zigzag_pattern(self):
+        """Test rendering a zigzag pattern."""
+        style = spark.BrailleLineGraphStyle(height=5)
+        result = style.scale_data([1, 10, 1, 10, 1])
+
+        assert len(result) == 5
+
+        # Should have non-empty characters
+        non_empty_count = sum(1 for row in result for char in row if ord(char) != 0x2800)
+        assert non_empty_count > 0, "Zigzag should have filled dots"
+
+    def test_graph_dimensions(self):
+        """Test that graph has correct dimensions."""
+        style = spark.BrailleLineGraphStyle(height=4)
+        result = style.scale_data([1, 2, 3, 4, 5, 6])
+
+        # Height should match
+        assert len(result) == 4, "Graph should have correct height"
+
+        # Width should be ceil(len(data) * 2 / 2) = len(data)
+        expected_width = 6  # ceil(6 * 2 / 2) = 6
+        assert all(len(row) == expected_width for row in result), "All rows should have correct width"
+
+    def test_braille_range(self):
+        """Test that all output characters are valid braille."""
+        style = spark.BrailleLineGraphStyle(height=10)
+        result = style.scale_data([1, 5, 2, 8, 3, 7, 4, 9, 2, 6])
+
+        for row in result:
+            for char in row:
+                code = ord(char)
+                assert 0x2800 <= code <= 0x28FF, f"Character U+{code:04X} is not a braille pattern"
+
+    def test_str_representation(self):
+        """Test string representation of the style."""
+        style = spark.BrailleLineGraphStyle(height=8)
+        assert str(style) == "Braille Line Graph Style (height=8)"
+
+    def test_verbose_parameter(self):
+        """Test that verbose parameter is accepted (even if unused)."""
+        style = spark.BrailleLineGraphStyle()
+        result = style.scale_data([1, 2, 3], verbose=True)
+        assert result is not None
+
+    def test_two_points(self):
+        """Test rendering two points."""
+        style = spark.BrailleLineGraphStyle(height=3)
+        result = style.scale_data([1, 10])
+
+        assert len(result) == 3
+
+        # Should have non-empty characters drawing the line
+        non_empty_count = sum(1 for row in result for char in row if ord(char) != 0x2800)
+        assert non_empty_count > 0, "Two-point graph should have filled dots"
+
+    def test_returns_2d_list(self):
+        """Test that scale_data returns a 2D list."""
+        style = spark.BrailleLineGraphStyle(height=5)
+        result = style.scale_data([1, 2, 3, 4, 5])
+
+        assert isinstance(result, list)
+        assert all(isinstance(row, list) for row in result)
+        assert all(isinstance(char, str) for row in result for char in row)
+
+    def test_minimum_height(self):
+        """Test that height=1 works correctly."""
+        style = spark.BrailleLineGraphStyle(height=1)
+        result = style.scale_data([1, 2, 3])
+
+        assert len(result) == 1
+        assert len(result[0]) == 3

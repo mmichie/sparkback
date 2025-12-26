@@ -329,6 +329,184 @@ class LineGraphStyle(AbstractStyle):
         return f"Line Graph Style (height={self.height})"
 
 
+class BrailleLineGraphStyle(AbstractStyle):
+    """
+    A style class that draws high-resolution line graphs using Unicode braille characters.
+
+    Each braille character is a 2x4 dot matrix, providing 4x vertical resolution
+    compared to regular character-based graphs. This creates smooth, btop-style
+    visualizations suitable for terminal dashboards.
+
+    The braille pattern (U+2800-U+28FF) uses this dot layout:
+        1 4     bit 0  bit 3
+        2 5  →  bit 1  bit 4
+        3 6     bit 2  bit 5
+        7 8     bit 6  bit 7
+    """
+
+    BRAILLE_BASE = 0x2800
+    # Dot position to bit mapping for 2x4 braille grid [row][col]
+    DOT_BITS = [
+        [0x01, 0x08],  # row 0: dots 1,4
+        [0x02, 0x10],  # row 1: dots 2,5
+        [0x04, 0x20],  # row 2: dots 3,6
+        [0x40, 0x80],  # row 3: dots 7,8
+    ]
+
+    def __init__(self, height: int = 10) -> None:
+        """
+        Initialize the BrailleLineGraphStyle with a specified graph height.
+
+        Args:
+            height: The number of braille character rows. Each row provides
+                   4 pixels of vertical resolution. Must be >= 1.
+
+        Raises:
+            ValueError: If height is less than 1.
+        """
+        if height < 1:
+            raise ValueError("Graph height must be at least 1")
+        self.height = height
+
+    def scale_data(self, data: List[Union[int, float]], verbose: bool = False) -> List[List[str]]:
+        """
+        Scale data and render as a high-resolution braille line graph.
+
+        Args:
+            data: A list of numerical values to plot.
+            verbose: If True, includes additional debug information (currently unused).
+
+        Returns:
+            A 2D list of braille characters representing the graph,
+            with graph[0] as the top row.
+
+        Raises:
+            ValueError: If data is empty.
+        """
+        if not data:
+            raise ValueError("Data cannot be empty")
+
+        # Pixel dimensions: each braille char is 2 wide x 4 tall
+        pixel_height = self.height * 4
+        pixel_width = len(data) * 2
+
+        # Create pixel canvas (False = empty, True = filled)
+        canvas: List[List[bool]] = [[False for _ in range(pixel_width)] for _ in range(pixel_height)]
+
+        # Scale data to pixel y-coordinates
+        min_val = min(data)
+        max_val = max(data)
+        range_val = max_val - min_val
+
+        if range_val == 0:
+            # All values are the same: draw horizontal line at midpoint
+            mid_y = pixel_height // 2
+            for x in range(pixel_width):
+                canvas[mid_y][x] = True
+        else:
+            # Scale each value to pixel coordinates
+            # Map to [0, pixel_height-1], then invert so top = max
+            scaled_points: List[Tuple[int, int]] = []
+            for i, val in enumerate(data):
+                # x-coordinate: center of each 2-pixel-wide column
+                x = i * 2
+                # y-coordinate: scaled and inverted
+                y_normalized = (val - min_val) / range_val
+                y = int((1 - y_normalized) * (pixel_height - 1))
+                scaled_points.append((x, y))
+
+            # Draw lines between consecutive points
+            for i in range(len(scaled_points) - 1):
+                x1, y1 = scaled_points[i]
+                x2, y2 = scaled_points[i + 1]
+                self._draw_line(canvas, x1, y1, x2, y2)
+
+            # For single point, just draw the dot
+            if len(scaled_points) == 1:
+                x, y = scaled_points[0]
+                if 0 <= y < pixel_height and 0 <= x < pixel_width:
+                    canvas[y][x] = True
+
+        return self._canvas_to_braille(canvas)
+
+    def _draw_line(self, canvas: List[List[bool]], x1: int, y1: int, x2: int, y2: int) -> None:
+        """
+        Draw a line between two points on the pixel canvas using Bresenham's algorithm.
+
+        Args:
+            canvas: The 2D pixel canvas (modified in place).
+            x1: Starting x-coordinate.
+            y1: Starting y-coordinate.
+            x2: Ending x-coordinate.
+            y2: Ending y-coordinate.
+        """
+        dx = abs(x2 - x1)
+        dy = abs(y2 - y1)
+        sx = 1 if x1 < x2 else -1
+        sy = 1 if y1 < y2 else -1
+        err = dx - dy
+
+        x, y = x1, y1
+        while True:
+            # Set pixel if within bounds
+            if 0 <= y < len(canvas) and 0 <= x < len(canvas[0]):
+                canvas[y][x] = True
+
+            if x == x2 and y == y2:
+                break
+
+            e2 = 2 * err
+            if e2 > -dy:
+                err -= dy
+                x += sx
+            if e2 < dx:
+                err += dx
+                y += sy
+
+    def _canvas_to_braille(self, canvas: List[List[bool]]) -> List[List[str]]:
+        """
+        Convert a pixel canvas to braille characters.
+
+        Groups pixels into 2x4 blocks and maps each block to the corresponding
+        braille character based on which dots are filled.
+
+        Args:
+            canvas: 2D boolean array of pixels.
+
+        Returns:
+            2D list of braille character strings.
+        """
+        pixel_height = len(canvas)
+        pixel_width = len(canvas[0]) if canvas else 0
+
+        # Output dimensions in braille characters
+        char_height = (pixel_height + 3) // 4  # Ceiling division
+        char_width = (pixel_width + 1) // 2
+
+        result: List[List[str]] = []
+
+        for char_row in range(char_height):
+            row_chars: List[str] = []
+            for char_col in range(char_width):
+                # Calculate the braille character for this 2x4 block
+                bits = 0
+                for dot_row in range(4):
+                    for dot_col in range(2):
+                        pixel_y = char_row * 4 + dot_row
+                        pixel_x = char_col * 2 + dot_col
+                        if pixel_y < pixel_height and pixel_x < pixel_width:
+                            if canvas[pixel_y][pixel_x]:
+                                bits |= self.DOT_BITS[dot_row][dot_col]
+                row_chars.append(chr(self.BRAILLE_BASE + bits))
+            result.append(row_chars)
+
+        return result
+
+    def __str__(self) -> str:
+        """Return a string representation of this style."""
+        return f"Braille Line Graph Style (height={self.height})"
+
+
 STYLES = {
     "default": DefaultStyle,
     "block": BlockStyle,
@@ -338,6 +516,7 @@ STYLES = {
     "arrows": ArrowsStyle,
     "multiline": MultiLineGraphStyle,
     "line": LineGraphStyle,
+    "braille-line": BrailleLineGraphStyle,
 }
 
 

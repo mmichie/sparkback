@@ -18,6 +18,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
+    "psutil>=7.2.0",
     "requests>=2.31.0",
 ]
 

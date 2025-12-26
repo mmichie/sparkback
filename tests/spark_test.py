@@ -408,3 +408,108 @@ class TestBrailleLineGraphStyle:
 
         assert len(result) == 1
         assert len(result[0]) == 3
+
+
+# Color Support Tests
+
+class TestColorSupport:
+    """Tests for ANSI color support functionality."""
+
+    def test_get_gradient_color_low_value(self):
+        """Test gradient returns red-ish color for low values."""
+        color = spark.get_gradient_color(0.0)
+        assert "\033[38;5;196m" in color  # Red
+
+    def test_get_gradient_color_high_value(self):
+        """Test gradient returns green-ish color for high values."""
+        color = spark.get_gradient_color(1.0)
+        assert "\033[38;5;46m" in color  # Green
+
+    def test_get_gradient_color_mid_value(self):
+        """Test gradient returns yellow-ish color for mid values."""
+        color = spark.get_gradient_color(0.5)
+        assert "\033[38;5;" in color  # Should be in yellow range
+
+    def test_get_gradient_color_clamps_below_zero(self):
+        """Test gradient clamps values below 0."""
+        color = spark.get_gradient_color(-0.5)
+        assert "\033[38;5;196m" in color  # Should be red (0.0)
+
+    def test_get_gradient_color_clamps_above_one(self):
+        """Test gradient clamps values above 1."""
+        color = spark.get_gradient_color(1.5)
+        assert "\033[38;5;46m" in color  # Should be green (1.0)
+
+    def test_apply_color_single_line_gradient(self):
+        """Test applying gradient color to single-line output."""
+        data_points = ["▁", "▃", "▅", "▆", "█"]
+        original_data = [1, 3, 5, 7, 9]
+        result = spark.apply_color_to_output(data_points, original_data, "gradient")
+
+        assert len(result) == 5
+        # Each character should contain ANSI codes
+        for char in result:
+            assert "\033[" in char
+            assert spark.ANSI_RESET in char
+
+    def test_apply_color_single_line_solid_color(self):
+        """Test applying solid color to single-line output."""
+        data_points = ["▁", "▃", "▅"]
+        original_data = [1, 5, 9]
+        result = spark.apply_color_to_output(data_points, original_data, "cyan")
+
+        assert len(result) == 3
+        for char in result:
+            assert spark.COLOR_CODES["cyan"] in char
+            assert spark.ANSI_RESET in char
+
+    def test_apply_color_multi_line(self):
+        """Test applying color to multi-line output."""
+        data_points = [["a", "b"], ["c", "d"]]
+        original_data = [1, 9]
+        result = spark.apply_color_to_output(data_points, original_data, "gradient")
+
+        assert len(result) == 2
+        assert len(result[0]) == 2
+        # First column should be red-ish (low value)
+        assert "\033[38;5;196m" in result[0][0]
+        # Second column should be green-ish (high value)
+        assert "\033[38;5;46m" in result[0][1]
+
+    def test_apply_color_preserves_whitespace(self):
+        """Test that whitespace characters are not colorized."""
+        data_points = [" ", "▁", " "]
+        original_data = [1, 5, 9]
+        result = spark.apply_color_to_output(data_points, original_data, "cyan")
+
+        # Whitespace should not have color codes
+        assert result[0] == " "
+        assert result[2] == " "
+        # Non-whitespace should have color
+        assert spark.COLOR_CODES["cyan"] in result[1]
+
+    def test_apply_color_empty_data(self):
+        """Test that empty data returns unchanged output."""
+        data_points = ["a", "b"]
+        result = spark.apply_color_to_output(data_points, [], "gradient")
+        assert result == data_points
+
+    def test_all_color_schemes_valid(self):
+        """Test that all defined color schemes work."""
+        data_points = ["▁", "█"]
+        original_data = [1, 9]
+
+        for scheme in ["gradient", "green", "cyan", "red", "blue", "magenta", "yellow"]:
+            result = spark.apply_color_to_output(data_points, original_data, scheme)
+            assert len(result) == 2
+            # Should have ANSI codes
+            assert "\033[" in result[1]
+
+    def test_gradient_produces_different_colors(self):
+        """Test that gradient produces different colors for different values."""
+        data_points = ["▁", "█"]
+        original_data = [1, 100]
+        result = spark.apply_color_to_output(data_points, original_data, "gradient")
+
+        # The two characters should have different color codes
+        assert result[0] != result[1]

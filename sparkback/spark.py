@@ -22,6 +22,108 @@ import argparse
 import statistics
 from typing import List, Union, Tuple
 
+# ANSI color constants
+ANSI_RESET = "\033[0m"
+
+COLOR_CODES = {
+    "green": "\033[32m",
+    "cyan": "\033[36m",
+    "red": "\033[31m",
+    "blue": "\033[34m",
+    "magenta": "\033[35m",
+    "yellow": "\033[33m",
+}
+
+# 256-color codes for gradient (red → yellow → green)
+# Red: 196, Orange: 208, Yellow: 220, Light green: 118, Green: 46
+GRADIENT_COLORS = [196, 202, 208, 214, 220, 190, 154, 118, 82, 46]
+
+
+def get_gradient_color(normalized_value: float) -> str:
+    """
+    Return ANSI 256-color escape code for a normalized value (0.0 to 1.0).
+
+    Maps values from red (low) through yellow (mid) to green (high).
+
+    Args:
+        normalized_value: A float between 0.0 and 1.0.
+
+    Returns:
+        ANSI escape code string for the corresponding color.
+    """
+    # Clamp value to valid range
+    normalized_value = max(0.0, min(1.0, normalized_value))
+    # Map to index in gradient
+    index = int(normalized_value * (len(GRADIENT_COLORS) - 1))
+    color_code = GRADIENT_COLORS[index]
+    return f"\033[38;5;{color_code}m"
+
+
+def apply_color_to_output(
+    data_points: Union[List[str], List[List[str]]],
+    original_data: List[float],
+    color_scheme: str,
+) -> Union[List[str], List[List[str]]]:
+    """
+    Apply ANSI colors to styled output based on original data values.
+
+    Args:
+        data_points: The styled output (1D list for single-line, 2D for multi-line).
+        original_data: The original numerical data used to determine colors.
+        color_scheme: The color scheme to use ('gradient' or a color name).
+
+    Returns:
+        The data_points with ANSI color codes applied.
+    """
+    if not original_data:
+        return data_points
+
+    min_val = min(original_data)
+    max_val = max(original_data)
+    range_val = max_val - min_val if max_val != min_val else 1.0
+
+    def get_color(value: float) -> str:
+        """Get the color code for a given value."""
+        if color_scheme == "gradient":
+            normalized = (value - min_val) / range_val
+            return get_gradient_color(normalized)
+        else:
+            return COLOR_CODES.get(color_scheme, COLOR_CODES["green"])
+
+    def colorize(char: str, color: str) -> str:
+        """Wrap a character with color codes."""
+        if char.strip():  # Only colorize non-whitespace
+            return f"{color}{char}{ANSI_RESET}"
+        return char
+
+    # Check if multi-line (2D list) or single-line (1D list)
+    if data_points and isinstance(data_points[0], list):
+        # Multi-line graph: color each column based on corresponding data point
+        result = []
+        for row in data_points:
+            colored_row = []
+            for col_idx, char in enumerate(row):
+                # Map column index to data index
+                # For braille-line: each data point maps to one column
+                # For line/multiline: same mapping
+                if col_idx < len(original_data):
+                    color = get_color(original_data[col_idx])
+                else:
+                    color = get_color(original_data[-1])  # Use last value for overflow
+                colored_row.append(colorize(char, color))
+            result.append(colored_row)
+        return result
+    else:
+        # Single-line: each character corresponds to a data point
+        result = []
+        for idx, char in enumerate(data_points):
+            if idx < len(original_data):
+                color = get_color(original_data[idx])
+            else:
+                color = get_color(original_data[-1])
+            result.append(colorize(char, color))
+        return result
+
 
 def print_stats(data):
     """
@@ -594,6 +696,11 @@ def get_args():
         action="store_true",
         help="show verbose representation of the data",
     )
+    parser.add_argument(
+        "--color",
+        choices=["gradient", "green", "cyan", "red", "blue", "magenta", "yellow"],
+        help="colorize output with specified color scheme",
+    )
     return parser.parse_args()
 
 
@@ -604,6 +711,9 @@ def main():
     args = get_args()
     style_instance = get_style_instance(args.ticks)
     scaled_data = style_instance.scale_data(args.numbers, verbose=args.verbose)
+
+    if args.color:
+        scaled_data = apply_color_to_output(scaled_data, args.numbers, args.color)
 
     if args.stats:
         print(print_stats(args.numbers))

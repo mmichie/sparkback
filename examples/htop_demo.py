@@ -96,14 +96,25 @@ class SystemMonitor:
 
 
 def render_graph(data: list, height: int = 2, color_scheme: str = "gradient") -> list:
-    """Render data as a colored braille graph."""
-    if not data or len(data) < 2:
-        # Need at least 2 points for a line
-        data = [0, 0]
+    """Render data as a colored braille graph.
+
+    Always pads data to HISTORY_LEN so graphs have consistent width.
+    New data appears on the right and scrolls left over time.
+    """
+    if not data:
+        data = [0]
+
+    # Pad data on the left to maintain consistent graph width
+    # Use the first value for padding to avoid visual jumps
+    if len(data) < HISTORY_LEN:
+        padding = [data[0]] * (HISTORY_LEN - len(data))
+        padded_data = padding + data
+    else:
+        padded_data = data
 
     style = BrailleLineGraphStyle(height=height)
-    graph = style.scale_data(data)
-    colored = apply_color_to_output(graph, data, color_scheme)
+    graph = style.scale_data(padded_data)
+    colored = apply_color_to_output(graph, padded_data, color_scheme)
     return ["".join(row) for row in colored]
 
 

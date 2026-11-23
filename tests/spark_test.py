@@ -620,3 +620,16 @@ class TestColorSupport:
 
         assert result[0][0].startswith(spark.get_gradient_color(1.0))  # points 1 and 9
         assert result[0][1].startswith(spark.get_gradient_color(0.0))  # point 1
+
+
+# Package exports
+
+
+def test_package_exports_its_api_and_nothing_else():
+    import sparkback
+    import sparkback.chart
+
+    public = {name for name in vars(sparkback) if not name.startswith("_")}
+    assert public - {"spark", "chart"} == set(sparkback.__all__)  # the submodules are attributes too
+    assert sparkback.render_chart is sparkback.chart.render_chart and sparkback.Series is sparkback.chart.Series
+    assert sparkback.DefaultStyle is spark.DefaultStyle

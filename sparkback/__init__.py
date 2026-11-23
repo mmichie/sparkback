@@ -1,1 +1,52 @@
-from .spark import *
+"""Sparklines and multi-series time-series charts for the terminal."""
+
+from .chart import Series, render_chart
+from .spark import (
+    ANSI_RESET,
+    COLOR_CODES,
+    GRADIENT_COLORS,
+    STYLES,
+    AbstractStyle,
+    ArrowsStyle,
+    AsciiStyle,
+    BlockStyle,
+    BrailleLineGraphStyle,
+    BrailleStyle,
+    DefaultStyle,
+    LineGraphStyle,
+    MultiLineGraphStyle,
+    NumericStyle,
+    apply_color_to_output,
+    get_args,
+    get_gradient_color,
+    get_style_instance,
+    main,
+    print_ansi_spark,
+    print_stats,
+)
+
+__all__ = [
+    "ANSI_RESET",
+    "COLOR_CODES",
+    "GRADIENT_COLORS",
+    "STYLES",
+    "AbstractStyle",
+    "ArrowsStyle",
+    "AsciiStyle",
+    "BlockStyle",
+    "BrailleLineGraphStyle",
+    "BrailleStyle",
+    "DefaultStyle",
+    "LineGraphStyle",
+    "MultiLineGraphStyle",
+    "NumericStyle",
+    "Series",
+    "apply_color_to_output",
+    "get_args",
+    "get_gradient_color",
+    "get_style_instance",
+    "main",
+    "print_ansi_spark",
+    "print_stats",
+    "render_chart",
+]

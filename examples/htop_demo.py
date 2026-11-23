@@ -147,9 +147,11 @@ def get_color_for_value(value: float, low: float = 50, high: float = 80) -> str:
 
 def print_header():
     """Print the header section."""
-    hostname = psutil.os.uname().nodename if hasattr(psutil.os, 'uname') else "localhost"
+    hostname = psutil.os.uname().nodename if hasattr(psutil.os, "uname") else "localhost"
     print(f"{BOLD}{CYAN}╔══════════════════════════════════════════════════════════════════════╗{ANSI_RESET}")
-    print(f"{BOLD}{CYAN}║{ANSI_RESET}  {BOLD}sparkback system monitor{ANSI_RESET} - {hostname:<43} {BOLD}{CYAN}║{ANSI_RESET}")
+    print(
+        f"{BOLD}{CYAN}║{ANSI_RESET}  {BOLD}sparkback system monitor{ANSI_RESET} - {hostname:<43} {BOLD}{CYAN}║{ANSI_RESET}"
+    )
     print(f"{BOLD}{CYAN}╚══════════════════════════════════════════════════════════════════════╝{ANSI_RESET}")
     print()
 
@@ -177,9 +179,11 @@ def main():
             uptime_hours = int(uptime_secs // 3600)
             uptime_mins = int((uptime_secs % 3600) // 60)
 
-            print(f"{DIM}Load: {load1:.2f} {load5:.2f} {load15:.2f}  |  "
-                  f"Uptime: {uptime_hours}h {uptime_mins}m  |  "
-                  f"Procs: {len(psutil.pids())}{ANSI_RESET}")
+            print(
+                f"{DIM}Load: {load1:.2f} {load5:.2f} {load15:.2f}  |  "
+                f"Uptime: {uptime_hours}h {uptime_mins}m  |  "
+                f"Procs: {len(psutil.pids())}{ANSI_RESET}"
+            )
             print()
 
             # CPU Section
@@ -230,9 +234,11 @@ def main():
             mem_used_gb = mem.used / 1024 / 1024 / 1024
             mem_total_gb = mem.total / 1024 / 1024 / 1024
 
-            print(f"{GREEN}Mem {ANSI_RESET} [{format_bar(mem.percent, 8, mem_color)}] "
-                  f"{mem_color}{mem.percent:5.1f}%{ANSI_RESET} "
-                  f"{DIM}{mem_used_gb:.1f}/{mem_total_gb:.1f}GB{ANSI_RESET}  {mem_graph[0]}")
+            print(
+                f"{GREEN}Mem {ANSI_RESET} [{format_bar(mem.percent, 8, mem_color)}] "
+                f"{mem_color}{mem.percent:5.1f}%{ANSI_RESET} "
+                f"{DIM}{mem_used_gb:.1f}/{mem_total_gb:.1f}GB{ANSI_RESET}  {mem_graph[0]}"
+            )
             print(f"{'':42}{mem_graph[1]}")
             print(f"{'':42}{mem_graph[2]}")
 
@@ -241,9 +247,11 @@ def main():
             swap_used_gb = swap.used / 1024 / 1024 / 1024
             swap_total_gb = swap.total / 1024 / 1024 / 1024
 
-            print(f"{MAGENTA}Swap{ANSI_RESET} [{format_bar(swap.percent, 8, swap_color)}] "
-                  f"{swap_color}{swap.percent:5.1f}%{ANSI_RESET} "
-                  f"{DIM}{swap_used_gb:.1f}/{swap_total_gb:.1f}GB{ANSI_RESET}  {swap_graph[0]}")
+            print(
+                f"{MAGENTA}Swap{ANSI_RESET} [{format_bar(swap.percent, 8, swap_color)}] "
+                f"{swap_color}{swap.percent:5.1f}%{ANSI_RESET} "
+                f"{DIM}{swap_used_gb:.1f}/{swap_total_gb:.1f}GB{ANSI_RESET}  {swap_graph[0]}"
+            )
             print(f"{'':42}{swap_graph[1]}")
             print(f"{'':42}{swap_graph[2]}")
 
@@ -274,8 +282,10 @@ def main():
                 if disk:
                     print(f"{BOLD}{WHITE}Disk I/O{ANSI_RESET}")
                     print(f"{DIM}{'─' * 72}{ANSI_RESET}")
-                    print(f"{CYAN}Read: {ANSI_RESET} {disk.read_bytes / 1024 / 1024 / 1024:6.1f} GB total  "
-                          f"{CYAN}Write:{ANSI_RESET} {disk.write_bytes / 1024 / 1024 / 1024:6.1f} GB total")
+                    print(
+                        f"{CYAN}Read: {ANSI_RESET} {disk.read_bytes / 1024 / 1024 / 1024:6.1f} GB total  "
+                        f"{CYAN}Write:{ANSI_RESET} {disk.write_bytes / 1024 / 1024 / 1024:6.1f} GB total"
+                    )
                     print()
             except Exception:
                 pass

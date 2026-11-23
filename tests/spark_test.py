@@ -39,6 +39,7 @@ def test_print_stats():
 
 # Command line
 
+
 def run_cli(monkeypatch, *args):
     monkeypatch.setattr("sys.argv", ["spark", *args])
     spark.main()
@@ -89,6 +90,7 @@ def test_cli_verbose_with_color(monkeypatch, capsys):
 
 # MultiLineGraphStyle Tests
 
+
 def bar_heights(graph):
     """Filled rows in each column, checking that each bar is solid from the bottom."""
     columns = ["".join(row[col] for row in graph) for col in range(len(graph[0]))]
@@ -116,6 +118,7 @@ class TestMultiLineGraphStyle:
 
 
 # LineGraphStyle Tests
+
 
 class TestLineGraphStyle:
     """Comprehensive tests for LineGraphStyle class."""
@@ -336,6 +339,7 @@ class TestLineGraphStyle:
 
 # BrailleLineGraphStyle Tests
 
+
 class TestBrailleLineGraphStyle:
     """Comprehensive tests for BrailleLineGraphStyle class."""
 
@@ -495,6 +499,7 @@ class TestBrailleLineGraphStyle:
 
 
 # Color Support Tests
+
 
 class TestColorSupport:
     """Tests for ANSI color support functionality."""

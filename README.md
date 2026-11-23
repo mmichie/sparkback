@@ -87,6 +87,71 @@ for row in colored:
     print("".join(row))
 ```
 
+## Time-series charts
+
+`spark-chart` draws several time series as one chart, like a monitoring dashboard. It shows a legend with
+each series' max (and when it happened), last, min and mean; braille lines over gridlines; a shared time
+axis; and a letter at the end of each line. Series are ranked by size and the eight largest are drawn. A
+series more than ten times smaller than the largest in its panel gets its own panel and y-axis, so it is not
+flattened against zero.
+
+```bash
+spark-chart metrics.json          # or pipe the JSON in: some-command | spark-chart
+```
+
+```
+checkout-api · Nov 23 2026 12:00 → 13:00 UTC
+a GET /cart        max  819 at 12:45  last   416  min   380  mean   484
+b POST /checkout   max  200 at 12:08  last   178  min  54.5  mean   160
+c GET /search      max  109 at 12:12  last   106  min  81.7  mean  97.0
+    │                                            ⢰⠒⠒⠊⠉⠉⠒⠒⠊⠉⠑⢆
+    │                                            ⡇          ⠘⡄
+500 ┤⣀⣀⣀⣀⣀⡠⢄⣀⣀⠤⠤⢄⡠⠤⠤⣀⣀⣀⣀⣀⣀⣀⣀⣀┈┈⢀⡀┈┈┈┈┈┈┈┈┈┈┈⢀⡀┈┈⣰⠁┈┈┈┈┈┈┈┈┈┈┈⠱⠤⢄⣀⡠⠤⠤⣀⣀⣀⣀⡀┈┈⣀ a
+    │                        ⠉⠉⠁⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠁⠈⠉⠉                        ⠈⠉⠉
+    │⠤⠤⠤⠤⠤⠔⠢⠤⠤⠒⠒⠢⠤⠔⠒⠤⠤⠤⠤⠤⠤⠤⠤ ⠠⠤⠤⠤⠤⣀⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⡀           ⡠⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤ b
+  0 ┤⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠒⠉⠉⠑⠒⠒⠒⠒⠒⠒⠒⠒⠒⠒⠒⠑⠑⠒⠊⠒⠉⠒⠉⠒⠉⠒⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉ c
+d p99 latency (s)  max 1.11 at 12:38  last 0.177  min 0.153  mean 0.328
+  1 ┤┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈⢸⠉⠉⠉⠉⠉⠉⠉⠉⠉⠑⡆┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+    │                                            ⡎          ⢸
+    │                                            ⡇          ⠘⡄
+    │                                           ⢀⠇           ⡇
+    │⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⡀ ⣀⣀       ⣀⡀ ⢀⣀⣀⣀⣀⣀⣀⣀⣀⣸            ⢸⣀⡀           ⣀ d
+  0 ┤┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈⠈⠉┈┈⠉⠉⠉⠉⠉⠉⠉┈⠈⠉⠁┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈⠈⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉⠉┈
+    └┬───────────┬──────────┬───────────┬───────────┬───────────┬───────────
+     12:00       12:10      12:20       12:30       12:40       12:50
+```
+
+In a terminal each series also gets its own color, from the terminal's 16-color palette in an order that
+keeps neighboring series distinguishable for colorblind readers.
+
+The input is JSON. Times are unix seconds, shown in UTC, and `null` is a gap in a line. `title`, `start`
+and `end` are optional; the time range defaults to the span of the data.
+
+```json
+{
+  "title": "checkout-api",
+  "start": 1795435200,
+  "end": 1795438800,
+  "series": [
+    {"name": "GET /cart", "points": [[1795435200, 421.5], [1795435260, 433.0], [1795435320, null]]},
+    {"name": "POST /checkout", "points": [[1795435200, 180.2], [1795435260, 176.9]]}
+  ]
+}
+```
+
+Options: `--width` (default: the terminal's width), `--height` (rows for the plots, shared among panels;
+default 12), `--max-series` (default and maximum 8), and `--color auto|always|never`.
+
+From Python:
+
+```python
+from sparkback.chart import Series, render_chart
+
+cart = Series("GET /cart", [(1795435200, 421.5), (1795435260, 433.0), (1795435320, 418.2)])
+search = Series("GET /search", [(1795435200, 95.1), (1795435260, 99.4), (1795435320, 97.8)])
+print(render_chart([cart, search], title="checkout-api", width=80))
+```
+
 ## htop-style Demo
 
 An example system monitor using braille graphs:

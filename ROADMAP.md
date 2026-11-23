@@ -76,9 +76,9 @@ This roadmap outlines the path to adding btop-style real-time monitoring capabil
 - [ ] Add X-axis with time labels
   - Relative time (1m, 5m, 30m ago)
   - Absolute timestamps
-- [ ] Add graph titles and legends
+- [x] Add graph titles and legends (`spark-chart`)
 - [ ] Support custom color themes
-- [ ] Add status bar with current/min/max/avg values
+- [x] Add status bar with current/min/max/avg values (`spark-chart` legend)
 
 **Deliverable**: Fully labeled graphs with axes and legends
 

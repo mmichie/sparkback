@@ -27,6 +27,7 @@ Homepage = "https://github.com/mmichie/sparkback"
 
 [project.scripts]
 spark = "sparkback.spark:main"
+spark-chart = "sparkback.chart:main"
 
 [project.optional-dependencies]
 dev = [

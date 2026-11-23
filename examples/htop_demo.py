@@ -5,7 +5,7 @@ htop-style system monitor using sparkback braille line graphs with color support
 Displays real-time CPU, memory, and network statistics using high-resolution
 braille sparklines with color gradients.
 
-Requires: psutil (uv add psutil)
+Requires psutil, from the demo extra: uv run --extra demo python examples/htop_demo.py
 """
 
 import sys

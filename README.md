@@ -157,10 +157,10 @@ print(render_chart([cart, search], title="checkout-api", width=80))
 
 ## htop-style Demo
 
-An example system monitor using braille graphs:
+An example system monitor using braille graphs. It needs psutil, from the `demo` extra:
 
 ```bash
-uv run python examples/htop_demo.py
+uv run --extra demo python examples/htop_demo.py
 ```
 
 ## See also

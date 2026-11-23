@@ -17,10 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Topic :: Software Development :: Libraries"
 ]
-dependencies = [
-    "psutil>=7.2.0",
-    "requests>=2.31.0",
-]
+dependencies = []
 
 [project.urls]
 Homepage = "https://github.com/mmichie/sparkback"
@@ -30,6 +27,9 @@ spark = "sparkback.spark:main"
 spark-chart = "sparkback.chart:main"
 
 [project.optional-dependencies]
+demo = [
+    "psutil>=7.2.0",
+]
 dev = [
     "pytest>=7.4,<9.0",
     "black>=23.7,<25.0",

@@ -19,6 +19,7 @@ Example usage:
     python3 this_file.py 1.0 2.5 3.3 4.7 3.5 --ticks="block" --stats
 """
 import argparse
+import math
 import statistics
 from typing import List, Union, Tuple
 
@@ -73,7 +74,9 @@ def apply_color_to_output(
         color_scheme: The color scheme to use ('gradient' or a color name).
 
     Returns:
-        The data_points with ANSI color codes applied.
+        The data_points with ANSI color codes applied. In multi-line output, a column that shows
+        several data points (braille-line packs two into each character) takes the color of the
+        largest of them.
     """
     if not original_data:
         return data_points
@@ -98,21 +101,18 @@ def apply_color_to_output(
 
     # Check if multi-line (2D list) or single-line (1D list)
     if data_points and isinstance(data_points[0], list):
-        # Multi-line graph: color each column based on corresponding data point
-        result = []
-        for row in data_points:
-            colored_row = []
-            for col_idx, char in enumerate(row):
-                # Map column index to data index
-                # For braille-line: each data point maps to one column
-                # For line/multiline: same mapping
-                if col_idx < len(original_data):
-                    color = get_color(original_data[col_idx])
-                else:
-                    color = get_color(original_data[-1])  # Use last value for overflow
-                colored_row.append(colorize(char, color))
-            result.append(colored_row)
-        return result
+        # Multi-line graph: line and multiline graphs have a column per data point, braille-line
+        # packs two points into each column, so derive the points per column from the width.
+        width = max(len(row) for row in data_points)
+        per_column = math.ceil(len(original_data) / width) if width else 1
+
+        def column_color(col_idx: int) -> str:
+            """Get the color for a column from the largest data point it shows."""
+            start = col_idx * per_column
+            stop = start + per_column
+            return get_color(max(original_data[start:stop] or original_data[-1:]))  # last value for overflow
+
+        return [[colorize(char, column_color(col_idx)) for col_idx, char in enumerate(row)] for row in data_points]
     else:
         # Single-line: each character corresponds to a data point
         result = []

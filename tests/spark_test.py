@@ -515,3 +515,21 @@ class TestColorSupport:
 
         # The two characters should have different color codes
         assert result[0] != result[1]
+
+    def test_gradient_braille_line_colors_each_character_by_its_points(self):
+        """Test that braille-line characters, which show two points each, take the larger point's color."""
+        data = [1, 1, 1, 1, 9, 9, 9, 9]
+        graph = spark.BrailleLineGraphStyle(height=1).scale_data(data)
+        result = spark.apply_color_to_output(graph, data, "gradient")
+
+        red, green = spark.get_gradient_color(0.0), spark.get_gradient_color(1.0)
+        assert [char.startswith(red) for char in result[0]] == [True, True, False, False]
+        assert [char.startswith(green) for char in result[0]] == [False, False, True, True]
+
+    def test_gradient_braille_line_odd_number_of_points(self):
+        """Test that the last braille character, showing a single point, takes that point's color."""
+        data = [1, 9, 1]
+        result = spark.apply_color_to_output(spark.BrailleLineGraphStyle(height=1).scale_data(data), data, "gradient")
+
+        assert result[0][0].startswith(spark.get_gradient_color(1.0))  # points 1 and 9
+        assert result[0][1].startswith(spark.get_gradient_color(0.0))  # point 1

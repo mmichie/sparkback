@@ -711,7 +711,10 @@ def get_args():
         choices=["gradient", "green", "cyan", "red", "blue", "magenta", "yellow"],
         help="colorize output with specified color scheme",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.stats and len(args.numbers) < 2:
+        parser.error("--stats needs at least two numbers")
+    return args
 
 
 def main():

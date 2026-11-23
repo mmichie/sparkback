@@ -33,6 +33,20 @@ def test_print_stats():
     assert spark.print_stats(data) == expected_output
 
 
+# Command line
+
+def run_cli(monkeypatch, *args):
+    monkeypatch.setattr("sys.argv", ["spark", *args])
+    spark.main()
+
+
+def test_cli_stats_with_one_number_is_a_usage_error(monkeypatch, capsys):
+    with pytest.raises(SystemExit) as exit_info:
+        run_cli(monkeypatch, "--stats", "5")
+    assert exit_info.value.code == 2
+    assert "--stats needs at least two numbers" in capsys.readouterr().err
+
+
 # MultiLineGraphStyle Tests
 
 def bar_heights(graph):

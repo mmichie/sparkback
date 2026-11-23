@@ -262,24 +262,18 @@ class MultiLineGraphStyle(AbstractStyle):
 
     def scale_data(self, data, verbose=False):
         min_data = min(data)
-        max_data = max(data)
-        range_data = max_data - min_data
+        range_data = max(data) - min_data
         graph_height = 10  # Set graph height to 10 lines for better visibility
 
+        # Bars run from one row for the minimum to the full height for the maximum, so every value
+        # shows. Without variation every bar is at the minimum, as DefaultStyle draws it.
         if range_data == 0:
-            return [["─" * len(data)] * graph_height]  # Uniform line if no variation
+            heights = [1] * len(data)
+        else:
+            heights = [1 + round((value - min_data) / range_data * (graph_height - 1)) for value in data]
 
-        scaled_data = [int((value - min_data) / range_data * (graph_height - 1)) for value in data]
-
-        # Initialize the graph canvas
-        graph = [[" " for _ in range(len(data))] for _ in range(graph_height)]
-
-        # Place the points on the graph
-        for idx, height in enumerate(scaled_data):
-            for y in range(graph_height):
-                graph[y][idx] = "█" if y >= graph_height - height else " "
-
-        return graph
+        # Row 0 is the top of the graph
+        return [["█" if row >= graph_height - height else " " for height in heights] for row in range(graph_height)]
 
     def __str__(self):
         return "Multiline Graph Style"

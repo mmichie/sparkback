@@ -33,6 +33,34 @@ def test_print_stats():
     assert spark.print_stats(data) == expected_output
 
 
+# MultiLineGraphStyle Tests
+
+def bar_heights(graph):
+    """Filled rows in each column, checking that each bar is solid from the bottom."""
+    columns = ["".join(row[col] for row in graph) for col in range(len(graph[0]))]
+    for column in columns:
+        filled = column.count("█")
+        assert column == " " * (len(column) - filled) + "█" * filled, "bars are solid from the bottom up"
+    return [column.count("█") for column in columns]
+
+
+class TestMultiLineGraphStyle:
+    """Tests for MultiLineGraphStyle bar graphs."""
+
+    def test_bars_run_from_one_row_to_full_height(self):
+        graph = spark.MultiLineGraphStyle().scale_data([1, 3, 10])
+        assert len(graph) == 10
+        assert bar_heights(graph) == [1, 3, 10]
+
+    def test_constant_data_draws_minimum_bars(self):
+        graph = spark.MultiLineGraphStyle().scale_data([5, 5, 5])
+        assert len(graph) == 10 and all(len(row) == 3 for row in graph)
+        assert bar_heights(graph) == [1, 1, 1]
+
+    def test_single_point(self):
+        assert bar_heights(spark.MultiLineGraphStyle().scale_data([7])) == [1]
+
+
 # LineGraphStyle Tests
 
 class TestLineGraphStyle:

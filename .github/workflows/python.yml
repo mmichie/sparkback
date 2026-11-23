@@ -23,7 +23,7 @@ jobs:
         enable-cache: true
     - name: Install dependencies
       run: |
-        uv sync --all-extras
+        uv sync --all-extras --locked
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names

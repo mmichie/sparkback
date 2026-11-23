@@ -21,6 +21,7 @@ Example usage:
 import argparse
 import math
 import statistics
+from abc import ABC, abstractmethod
 from typing import List, Union, Tuple
 
 # ANSI color constants
@@ -153,14 +154,15 @@ def print_stats(data):
     return stats_str
 
 
-class AbstractStyle:
+class AbstractStyle(ABC):
     """
     Base class that defines the interface for scaling data into different styles.
     """
 
     TICKS = None
 
-    def scale_data(self, data, verbose=False):
+    @abstractmethod
+    def scale_data(self, data, verbose=False) -> Union[List[str], List[List[str]]]:
         """
         Abstract method for scaling data according to the selected style.
 
@@ -171,7 +173,6 @@ class AbstractStyle:
         Returns:
             list: A list of symbols representing the scaled data.
         """
-        raise NotImplementedError
 
 
 class ArrowsStyle(AbstractStyle):

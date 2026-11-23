@@ -10,6 +10,17 @@ import pytest
 import sparkback.spark as spark
 
 
+def test_styles_must_implement_scale_data():
+    class Unfinished(spark.AbstractStyle):
+        pass
+
+    with pytest.raises(TypeError):
+        spark.AbstractStyle()  # type: ignore[abstract]
+    with pytest.raises(TypeError):
+        Unfinished()  # type: ignore[abstract]
+    assert all(isinstance(style(), spark.AbstractStyle) for style in spark.STYLES.values())
+
+
 def test_scale_data_default():
     data = [1, 2, 3, 4, 5, 6, 7, 8]
     style_instance = spark.DefaultStyle()

@@ -723,7 +723,7 @@ def main():
     """
     args = get_args()
     style_instance = get_style_instance(args.ticks)
-    scaled_data = style_instance.scale_data(args.numbers, verbose=args.verbose)
+    scaled_data = style_instance.scale_data(args.numbers)  # print_ansi_spark labels each point with --verbose
 
     if args.color:
         scaled_data = apply_color_to_output(scaled_data, args.numbers, args.color)

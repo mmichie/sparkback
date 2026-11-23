@@ -47,6 +47,17 @@ def test_cli_stats_with_one_number_is_a_usage_error(monkeypatch, capsys):
     assert "--stats needs at least two numbers" in capsys.readouterr().err
 
 
+def test_cli_verbose_labels_each_point_once(monkeypatch, capsys):
+    run_cli(monkeypatch, "--verbose", "1", "2", "3")
+    assert capsys.readouterr().out == "Point 1: ▁\nPoint 2: ▅\nPoint 3: █\n"
+
+
+def test_cli_verbose_with_color(monkeypatch, capsys):
+    run_cli(monkeypatch, "--verbose", "--color", "cyan", "1", "2")
+    cyan, reset = spark.COLOR_CODES["cyan"], spark.ANSI_RESET
+    assert capsys.readouterr().out == f"Point 1: {cyan}▁{reset}\nPoint 2: {cyan}█{reset}\n"
+
+
 # MultiLineGraphStyle Tests
 
 def bar_heights(graph):

@@ -2,6 +2,10 @@
 # pylint: skip-file
 # mypy: ignore-errors
 
+import itertools
+import re
+from pathlib import Path
+
 import pytest
 import sparkback.spark as spark
 
@@ -50,6 +54,31 @@ def test_cli_stats_with_one_number_is_a_usage_error(monkeypatch, capsys):
 def test_cli_verbose_labels_each_point_once(monkeypatch, capsys):
     run_cli(monkeypatch, "--verbose", "1", "2", "3")
     assert capsys.readouterr().out == "Point 1: ▁\nPoint 2: ▅\nPoint 3: █\n"
+
+
+def readme_examples():
+    """(arguments, output lines) for each spark command in the README that shows its output."""
+    lines = (Path(__file__).parent.parent / "README.md").read_text(encoding="utf-8").splitlines()
+    examples = []
+    for i, line in enumerate(lines):
+        inline = re.fullmatch(r"spark (.+?) +# (\S+)", line)  # spark ARGS  # OUTPUT
+        if inline:
+            examples.append((inline.group(1).split(), [inline.group(2)]))
+        elif line.startswith("spark "):  # spark ARGS, then "# OUTPUT" lines
+            output = [text[2:] for text in itertools.takewhile(lambda text: text.startswith("# "), lines[i + 1 :])]
+            if output:
+                examples.append((line.split()[1:], output))
+    return examples
+
+
+def test_readme_has_examples_with_output():
+    assert len(readme_examples()) >= 8
+
+
+@pytest.mark.parametrize("args, output", readme_examples(), ids=lambda value: " ".join(value))
+def test_readme_example_output(monkeypatch, capsys, args, output):
+    run_cli(monkeypatch, *args)
+    assert capsys.readouterr().out.splitlines() == output
 
 
 def test_cli_verbose_with_color(monkeypatch, capsys):

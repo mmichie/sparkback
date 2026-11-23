@@ -21,18 +21,18 @@ Run sparkback with a series of numbers:
 
 ```bash
 spark --ticks default 10 20 30 40 50
-# ▁▂▄▆█
+# ▁▃▅▆█
 ```
 
 ### Available Styles
 
 ```bash
-spark --ticks default 10 20 30 40 50      # ▁▂▄▆█
-spark --ticks block 10 20 30 40 50        # ▏▎▍▋█
+spark --ticks default 10 20 30 40 50      # ▁▃▅▆█
+spark --ticks block 10 20 30 40 50        # ▏▍▋▊█
 spark --ticks ascii 10 20 30 40 50        # .oO#@
 spark --ticks numeric 10 20 30 40 50      # 12345
-spark --ticks braille 10 20 30 40 50      # ⣀⣤⣶⣿⣿
-spark --ticks arrows 10 20 30 40 50       # →↗↗↗↗
+spark --ticks braille 10 20 30 40 50      # ⣀⣤⣶⣶⣿
+spark --ticks arrows 10 20 30 40 50       # →↑↑↑↑
 spark --ticks line 10 20 30 40 50         # Multi-line box-drawing graph
 spark --ticks multiline 10 20 30 40 50    # Multi-line bar chart
 spark --ticks braille-line 10 20 30 40 50 # High-resolution braille line graph
@@ -55,12 +55,15 @@ Available color schemes: `gradient`, `green`, `cyan`, `red`, `blue`, `magenta`, 
 
 ### Statistics
 
-Use the `--stats` option to display statistics:
+Use the `--stats` option to display statistics (the standard deviation is the sample standard deviation):
 
 ```bash
 spark --ticks default 10 20 30 40 50 --stats
-# ▁▂▄▆█
-# min: 10.00, max: 50.00, mean: 30.00, std: 14.14
+# Minimum: 10.0
+# Maximum: 50.0
+# Mean: 30.0
+# Standard Deviation: 15.811388300841896
+# ▁▃▅▆█
 ```
 
 ## Python API

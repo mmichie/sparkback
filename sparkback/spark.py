@@ -18,6 +18,7 @@ Example usage:
 
     python3 this_file.py 1.0 2.5 3.3 4.7 3.5 --ticks="block" --stats
 """
+
 import argparse
 import math
 import statistics

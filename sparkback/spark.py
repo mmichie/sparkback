@@ -22,7 +22,7 @@ import argparse
 import math
 import statistics
 from abc import ABC, abstractmethod
-from typing import List, Sequence, Tuple, Union, cast
+from typing import List, Optional, Sequence, Tuple, Union, cast
 
 # ANSI color constants
 ANSI_RESET = "\033[0m"
@@ -451,7 +451,13 @@ class BrailleLineGraphStyle(AbstractStyle):
         [0x40, 0x80],  # row 3: dots 7,8
     ]
 
-    def __init__(self, height: int = 10, filled: bool = False) -> None:
+    def __init__(
+        self,
+        height: int = 10,
+        filled: bool = False,
+        min_value: Optional[float] = None,
+        max_value: Optional[float] = None,
+    ) -> None:
         """
         Initialize the BrailleLineGraphStyle with a specified graph height.
 
@@ -460,14 +466,22 @@ class BrailleLineGraphStyle(AbstractStyle):
                    4 pixels of vertical resolution. Must be >= 1.
             filled: If True, fills the area below the line (area chart style).
                    If False, draws only the line (default).
+            min_value: The value at the bottom of the graph; by default the smallest data point.
+            max_value: The value at the top of the graph; by default the largest data point.
+                   Set both for a fixed scale such as 0-100 for percentages. Data outside
+                   the range is drawn at the nearest edge.
 
         Raises:
-            ValueError: If height is less than 1.
+            ValueError: If height is less than 1, or max_value is not greater than min_value.
         """
         if height < 1:
             raise ValueError("Graph height must be at least 1")
+        if min_value is not None and max_value is not None and max_value <= min_value:
+            raise ValueError("max_value must be greater than min_value")
         self.height = height
         self.filled = filled
+        self.min_value = min_value
+        self.max_value = max_value
 
     def scale_data(self, data: Sequence[float], verbose: bool = False) -> List[List[str]]:
         """
@@ -495,9 +509,15 @@ class BrailleLineGraphStyle(AbstractStyle):
         # Create pixel canvas (False = empty, True = filled)
         canvas: List[List[bool]] = [[False for _ in range(pixel_width)] for _ in range(pixel_height)]
 
-        # Scale data to pixel y-coordinates
-        min_val = min(data)
-        max_val = max(data)
+        # Scale data to pixel y-coordinates, between the fixed bounds where given
+        min_val = min(data) if self.min_value is None else self.min_value
+        max_val = max(data) if self.max_value is None else self.max_value
+        if max_val <= min_val and (self.min_value is not None or self.max_value is not None):
+            # The data sits at or beyond the fixed bound, so keep it at that edge of the graph
+            if self.min_value is not None:
+                max_val = min_val + 1
+            else:
+                min_val = max_val - 1
         range_val = max_val - min_val
 
         if range_val == 0:
@@ -517,8 +537,8 @@ class BrailleLineGraphStyle(AbstractStyle):
             for i, val in enumerate(data):
                 # x-coordinate: 1 pixel per data point
                 x = i
-                # y-coordinate: scaled and inverted
-                y_normalized = (val - min_val) / range_val
+                # y-coordinate: scaled, clamped to the graph, and inverted
+                y_normalized = min(1.0, max(0.0, (val - min_val) / range_val))
                 y = int((1 - y_normalized) * (pixel_height - 1))
                 scaled_points.append((x, y))
 

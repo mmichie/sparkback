@@ -72,7 +72,7 @@ The codebase is structured around a simple object-oriented design pattern:
    - **ArrowsStyle**: Directional indicators (↓→↗↑) - shows trend between consecutive values
    - **MultiLineGraphStyle**: Vertical bar chart rendered across 10 lines
    - **LineGraphStyle**: Connected line graphs using box-drawing characters (─│╱╲●) - configurable height
-   - **BrailleLineGraphStyle**: High-resolution line graphs in braille, two data points per character - configurable height, optional fill
+   - **BrailleLineGraphStyle**: High-resolution line graphs in braille, two data points per character - configurable height, optional fill, optional fixed scale (`min_value`/`max_value`)
 
 3. **Key Functions**
    - `get_style_instance(style)`: Factory function returning style instances from the STYLES dict

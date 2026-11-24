@@ -81,8 +81,11 @@ print_ansi_spark(scaled)
 from sparkback.spark import BrailleLineGraphStyle, apply_color_to_output
 
 data = [10, 45, 30, 80, 20, 60, 40, 70]
-style = BrailleLineGraphStyle(height=3, filled=False)
+style = BrailleLineGraphStyle(height=3, filled=False)  # scaled to the data's min and max
 graph = style.scale_data(data)
+
+# On a fixed scale instead, such as 0-100 for percentages
+percent_graph = BrailleLineGraphStyle(height=3, min_value=0, max_value=100).scale_data(data)
 
 # Add color
 colored = apply_color_to_output(graph, data, "gradient")

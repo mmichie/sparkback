@@ -508,6 +508,32 @@ class TestBrailleLineGraphStyle:
         # Width is ceil(3 / 2) = 2 braille characters
         assert len(result[0]) == 2
 
+    def test_fixed_range_plots_on_an_absolute_scale(self):
+        """Test that 50 on a 0-100 scale is drawn in the middle row, not stretched to fill the graph."""
+        result = spark.BrailleLineGraphStyle(height=3, min_value=0, max_value=100).scale_data([50, 50])
+        assert [row[0] != "⠀" for row in result] == [False, True, False]
+
+    def test_values_outside_a_fixed_range_are_drawn_at_the_edges(self):
+        """Test that 150 and -20 on a 0-100 scale land on the top and bottom pixel rows."""
+        result = spark.BrailleLineGraphStyle(height=2, min_value=0, max_value=100).scale_data([150, -20])
+        assert ord(result[0][0]) & 0x01  # top-left dot: the first point
+        assert ord(result[1][0]) & 0x80  # bottom-right dot: the second point
+
+    def test_min_value_alone_keeps_constant_data_at_the_bottom(self):
+        """Test that zeros with a zero baseline lie along the bottom rather than mid-graph."""
+        result = spark.BrailleLineGraphStyle(height=2, min_value=0).scale_data([0, 0, 0, 0])
+        assert result == [["⠀", "⠀"], ["⣀", "⣀"]]
+
+    def test_max_value_alone_keeps_data_above_it_at_the_top(self):
+        """Test that data at or above a fixed top is drawn along the top."""
+        result = spark.BrailleLineGraphStyle(height=2, max_value=10).scale_data([12, 12])
+        assert result == [["⠉"], ["⠀"]]
+
+    def test_fixed_range_must_be_increasing(self):
+        """Test that max_value must be greater than min_value."""
+        with pytest.raises(ValueError, match="max_value must be greater than min_value"):
+            spark.BrailleLineGraphStyle(min_value=5, max_value=5)
+
 
 # Color Support Tests
 

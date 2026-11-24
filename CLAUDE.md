@@ -106,5 +106,5 @@ To add a new visualization style:
 ## Code Standards
 
 - Line length: 120 characters (enforced by Black, flake8, pylint)
-- Python version: >=3.8.1
+- Python version: >=3.11 (the oldest maintained release; CI tests 3.11 and the newest)
 - Test files use: `# flake8: noqa` and `# pylint: skip-file`

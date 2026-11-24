@@ -1,6 +1,6 @@
 [project]
 name = "sparkback"
-version = "0.3.0"
+version = "0.4.0"
 description = "Sparklines Library"
 authors = [
     {name = "Matt Michie", email = "mmichie@gmail.com"}

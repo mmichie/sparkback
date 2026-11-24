@@ -8,13 +8,10 @@ braille sparklines with color gradients.
 Requires psutil, from the demo extra: uv run --extra demo python examples/htop_demo.py
 """
 
-import sys
+import platform
 import time
 
 import psutil
-
-# Add parent directory to path for development
-sys.path.insert(0, str(__file__).rsplit("/", 2)[0])
 
 from sparkback.spark import (
     BrailleLineGraphStyle,
@@ -45,7 +42,8 @@ class SystemMonitor:
     """Collects and stores system statistics history."""
 
     def __init__(self):
-        self.cpu_count = psutil.cpu_count()
+        # One history per CPU that cpu_percent reports (psutil.cpu_count() can return None)
+        self.cpu_count = len(psutil.cpu_percent(percpu=True))
         self.cpu_histories = [[] for _ in range(self.cpu_count)]
         self.mem_history = []
         self.swap_history = []
@@ -147,10 +145,11 @@ def get_color_for_value(value: float, low: float = 50, high: float = 80) -> str:
 
 def print_header():
     """Print the header section."""
-    hostname = psutil.os.uname().nodename if hasattr(psutil.os, "uname") else "localhost"
+    hostname = platform.node() or "localhost"
     print(f"{BOLD}{CYAN}╔══════════════════════════════════════════════════════════════════════╗{ANSI_RESET}")
     print(
-        f"{BOLD}{CYAN}║{ANSI_RESET}  {BOLD}sparkback system monitor{ANSI_RESET} - {hostname:<43} {BOLD}{CYAN}║{ANSI_RESET}"
+        f"{BOLD}{CYAN}║{ANSI_RESET}  {BOLD}sparkback system monitor{ANSI_RESET} - "
+        f"{hostname:<43} {BOLD}{CYAN}║{ANSI_RESET}"
     )
     print(f"{BOLD}{CYAN}╚══════════════════════════════════════════════════════════════════════╝{ANSI_RESET}")
     print()
@@ -276,19 +275,19 @@ def main():
 
             print()
 
-            # Disk I/O (if available)
+            # Disk I/O, when psutil can read it on this system
             try:
                 disk = psutil.disk_io_counters()
-                if disk:
-                    print(f"{BOLD}{WHITE}Disk I/O{ANSI_RESET}")
-                    print(f"{DIM}{'─' * 72}{ANSI_RESET}")
-                    print(
-                        f"{CYAN}Read: {ANSI_RESET} {disk.read_bytes / 1024 / 1024 / 1024:6.1f} GB total  "
-                        f"{CYAN}Write:{ANSI_RESET} {disk.write_bytes / 1024 / 1024 / 1024:6.1f} GB total"
-                    )
-                    print()
-            except Exception:
-                pass
+            except (OSError, RuntimeError, ValueError):  # e.g. no /proc/diskstats or /sys/block in a container
+                disk = None
+            if disk:
+                print(f"{BOLD}{WHITE}Disk I/O{ANSI_RESET}")
+                print(f"{DIM}{'─' * 72}{ANSI_RESET}")
+                print(
+                    f"{CYAN}Read: {ANSI_RESET} {disk.read_bytes / 1024 / 1024 / 1024:6.1f} GB total  "
+                    f"{CYAN}Write:{ANSI_RESET} {disk.write_bytes / 1024 / 1024 / 1024:6.1f} GB total"
+                )
+                print()
 
             # Footer
             print(f"{DIM}Press Ctrl+C to exit | Refreshing every 1s{ANSI_RESET}")

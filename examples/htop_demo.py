@@ -3,19 +3,20 @@
 htop-style system monitor using sparkback braille line graphs with color support.
 
 Displays real-time CPU, memory, and network statistics using high-resolution
-braille sparklines with color gradients.
+braille sparklines: CPU, memory, and swap on a 0-100% scale, network from zero.
 
 Requires psutil, from the demo extra: uv run --extra demo python examples/htop_demo.py
 """
 
 import platform
+import re
 import time
+from typing import Callable, List, Optional, Union
 
 import psutil
 
 from sparkback.spark import (
     BrailleLineGraphStyle,
-    apply_color_to_output,
     ANSI_RESET,
 )
 
@@ -34,8 +35,11 @@ MAGENTA = "\033[35m"
 BLUE = "\033[34m"
 WHITE = "\033[37m"
 
-# History length for graphs
+# History length for graphs; each braille character shows two samples
 HISTORY_LEN = 60
+GRAPH_WIDTH = HISTORY_LEN // 2
+BLANK = "⠀"  # an empty braille cell
+ANSI_CODE = re.compile(r"\033\[[0-9;]*m")
 
 
 class SystemMonitor:
@@ -93,27 +97,27 @@ class SystemMonitor:
         self.last_time = now
 
 
-def render_graph(data: list, height: int = 2, color_scheme: str = "gradient") -> list:
-    """Render data as a colored braille graph.
+def render_graph(
+    data: List[float], color: Union[str, Callable[[float], str]], max_value: Optional[float] = None, height: int = 3
+) -> List[str]:
+    """Render data as a braille graph from zero up, newest on the right.
 
-    Always pads data to HISTORY_LEN so graphs have consistent width.
-    New data appears on the right and scrolls left over time.
+    Until the history fills the graph, it is padded with blank cells on the left rather than made-up samples.
+    color is an ANSI color for the whole graph, or a function from a value to a color, which colors each
+    column by the larger of the two samples it shows.
     """
-    if not data:
-        data = [0]
+    graph = BrailleLineGraphStyle(height=height, min_value=0, max_value=max_value).scale_data(data)
+    padding = BLANK * (GRAPH_WIDTH - len(graph[0]))
+    if callable(color):
+        colors = [color(max(data[2 * col : 2 * col + 2])) for col in range(len(graph[0]))]
+        return [padding + "".join(c + char for c, char in zip(colors, row)) + ANSI_RESET for row in graph]
+    return [padding + color + "".join(row) + ANSI_RESET for row in graph]
 
-    # Pad data on the left to maintain consistent graph width
-    # Use the first value for padding to avoid visual jumps
-    if len(data) < HISTORY_LEN:
-        padding = [data[0]] * (HISTORY_LEN - len(data))
-        padded_data = padding + data
-    else:
-        padded_data = data
 
-    style = BrailleLineGraphStyle(height=height, filled=False)
-    graph = style.scale_data(padded_data)
-    colored = apply_color_to_output(graph, padded_data, color_scheme)
-    return ["".join(row) for row in colored]
+def with_prefix(prefix: str, graph: List[str]) -> List[str]:
+    """Put prefix before the graph's first row and indent the other rows to line up under it."""
+    indent = " " * len(ANSI_CODE.sub("", prefix))
+    return [prefix + graph[0]] + [indent + row for row in graph[1:]]
 
 
 def format_bar(value: float, width: int = 10, color: str = GREEN) -> str:
@@ -149,7 +153,7 @@ def print_header():
     print(f"{BOLD}{CYAN}╔══════════════════════════════════════════════════════════════════════╗{ANSI_RESET}")
     print(
         f"{BOLD}{CYAN}║{ANSI_RESET}  {BOLD}sparkback system monitor{ANSI_RESET} - "
-        f"{hostname:<43} {BOLD}{CYAN}║{ANSI_RESET}"
+        f"{hostname:<40.40} {BOLD}{CYAN}║{ANSI_RESET}"
     )
     print(f"{BOLD}{CYAN}╚══════════════════════════════════════════════════════════════════════╝{ANSI_RESET}")
     print()
@@ -192,29 +196,22 @@ def main():
             # Show up to 8 cores, 2 per row
             cores_per_row = 2
             for row_start in range(0, min(monitor.cpu_count, 8), cores_per_row):
-                # Graph lines (3 rows per graph)
-                line1_parts = []
-                line2_parts = []
-                line3_parts = []
-
+                columns = []
                 for i in range(row_start, min(row_start + cores_per_row, monitor.cpu_count, 8)):
                     history = monitor.cpu_histories[i]
-                    current = history[-1] if history else 0
+                    current = history[-1]
                     color = get_color_for_value(current)
 
-                    graph_lines = render_graph(history, height=3, color_scheme="gradient")
+                    # 0-100% scale, each column colored by load like the bar
+                    graph_lines = render_graph(history, get_color_for_value, max_value=100)
 
                     label = f"{CYAN}CPU{i:<2}{ANSI_RESET}"
                     bar = format_bar(current, 8, color)
                     pct = f"{color}{current:5.1f}%{ANSI_RESET}"
+                    columns.append(with_prefix(f"{label}[{bar}]{pct} ", graph_lines))
 
-                    line1_parts.append(f"{label}[{bar}]{pct} {graph_lines[0]}")
-                    line2_parts.append(f"{'':21}{graph_lines[1]}")
-                    line3_parts.append(f"{'':21}{graph_lines[2]}")
-
-                print("  ".join(line1_parts))
-                print("  ".join(line2_parts))
-                print("  ".join(line3_parts))
+                for lines in zip(*columns):
+                    print("  ".join(lines))
 
             if monitor.cpu_count > 8:
                 print(f"{DIM}  ... and {monitor.cpu_count - 8} more cores{ANSI_RESET}")
@@ -228,31 +225,32 @@ def main():
             mem = psutil.virtual_memory()
             swap = psutil.swap_memory()
 
-            mem_graph = render_graph(monitor.mem_history, height=3, color_scheme="cyan")
+            mem_graph = render_graph(monitor.mem_history, CYAN, max_value=100)
             mem_color = get_color_for_value(mem.percent, 60, 85)
             mem_used_gb = mem.used / 1024 / 1024 / 1024
             mem_total_gb = mem.total / 1024 / 1024 / 1024
 
-            print(
+            # Fixed-width sizes keep the memory and swap graphs in the same columns
+            mem_prefix = (
                 f"{GREEN}Mem {ANSI_RESET} [{format_bar(mem.percent, 8, mem_color)}] "
                 f"{mem_color}{mem.percent:5.1f}%{ANSI_RESET} "
-                f"{DIM}{mem_used_gb:.1f}/{mem_total_gb:.1f}GB{ANSI_RESET}  {mem_graph[0]}"
+                f"{DIM}{mem_used_gb:5.1f}/{mem_total_gb:5.1f}GB{ANSI_RESET}  "
             )
-            print(f"{'':42}{mem_graph[1]}")
-            print(f"{'':42}{mem_graph[2]}")
+            for line in with_prefix(mem_prefix, mem_graph):
+                print(line)
 
-            swap_graph = render_graph(monitor.swap_history, height=3, color_scheme="magenta")
+            swap_graph = render_graph(monitor.swap_history, MAGENTA, max_value=100)
             swap_color = get_color_for_value(swap.percent, 30, 60)
             swap_used_gb = swap.used / 1024 / 1024 / 1024
             swap_total_gb = swap.total / 1024 / 1024 / 1024
 
-            print(
+            swap_prefix = (
                 f"{MAGENTA}Swap{ANSI_RESET} [{format_bar(swap.percent, 8, swap_color)}] "
                 f"{swap_color}{swap.percent:5.1f}%{ANSI_RESET} "
-                f"{DIM}{swap_used_gb:.1f}/{swap_total_gb:.1f}GB{ANSI_RESET}  {swap_graph[0]}"
+                f"{DIM}{swap_used_gb:5.1f}/{swap_total_gb:5.1f}GB{ANSI_RESET}  "
             )
-            print(f"{'':42}{swap_graph[1]}")
-            print(f"{'':42}{swap_graph[2]}")
+            for line in with_prefix(swap_prefix, swap_graph):
+                print(line)
 
             print()
 
@@ -260,18 +258,17 @@ def main():
             print(f"{BOLD}{WHITE}Network I/O{ANSI_RESET}")
             print(f"{DIM}{'─' * 72}{ANSI_RESET}")
 
-            net_in_graph = render_graph(monitor.net_in_history, height=3, color_scheme="green")
-            net_out_graph = render_graph(monitor.net_out_history, height=3, color_scheme="blue")
+            # From zero up to each graph's own peak
+            net_in_graph = render_graph(monitor.net_in_history, GREEN)
+            net_out_graph = render_graph(monitor.net_out_history, BLUE)
 
-            current_in = monitor.net_in_history[-1] if monitor.net_in_history else 0
-            current_out = monitor.net_out_history[-1] if monitor.net_out_history else 0
+            current_in = monitor.net_in_history[-1]
+            current_out = monitor.net_out_history[-1]
 
-            print(f"{GREEN}▼ In {ANSI_RESET} {format_bytes(current_in):>12}  {net_in_graph[0]}")
-            print(f"{'':20}{net_in_graph[1]}")
-            print(f"{'':20}{net_in_graph[2]}")
-            print(f"{BLUE}▲ Out{ANSI_RESET} {format_bytes(current_out):>12}  {net_out_graph[0]}")
-            print(f"{'':20}{net_out_graph[1]}")
-            print(f"{'':20}{net_out_graph[2]}")
+            for line in with_prefix(f"{GREEN}▼ In {ANSI_RESET} {format_bytes(current_in):>12}  ", net_in_graph):
+                print(line)
+            for line in with_prefix(f"{BLUE}▲ Out{ANSI_RESET} {format_bytes(current_out):>12}  ", net_out_graph):
+                print(line)
 
             print()
 

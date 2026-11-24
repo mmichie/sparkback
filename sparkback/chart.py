@@ -154,6 +154,7 @@ def format_value(value: float) -> str:
 
 def render_chart(
     series: Sequence[Series],
+    *,
     title: str = "",
     width: Optional[int] = None,
     height: int = DEFAULT_HEIGHT,

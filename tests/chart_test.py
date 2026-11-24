@@ -314,6 +314,11 @@ def test_no_series():
         render_chart([], width=80)
 
 
+def test_options_are_keyword_only():
+    with pytest.raises(TypeError):
+        render_chart(fixture_series(), "api", 64)  # type: ignore[misc]
+
+
 def test_parse_chart_spec():
     spec = parse_chart_spec(
         {

@@ -293,6 +293,28 @@ def test_control_characters_in_names_are_replaced():
     assert "bad [31mname here" in output and output.startswith("t itle · ")
 
 
+@pytest.mark.parametrize("text, columns", [("abc", 3), ("東京", 4), ("é", 1), ("🔥 hot", 6), ("", 0)])
+def test_width_counts_terminal_columns(text, columns):
+    assert chart._width(text) == columns
+
+
+def test_truncate_middle_counts_wide_characters():
+    shortened = chart._truncate_middle("東京東京東京", 7)
+    assert shortened == "東…東京" and chart._width(shortened) == 7
+
+
+def test_wide_names_stay_aligned_and_within_the_width():
+    series = [
+        flat("東京-db-primary", 50.0),
+        flat("osaka-db-replica", 40.0),
+        flat("大阪データベース複製サーバー" * 3, 45.0),
+    ]
+    for width in (60, 80, 120):
+        rows = legend_rows(render_chart(series, width=width, color=False))
+        assert len({chart._width(row[: row.index("max")]) for row in rows}) == 1  # "max" lines up
+        assert max(chart._width(row) for row in rows) <= width
+
+
 @pytest.mark.parametrize(
     "kwargs, message",
     [

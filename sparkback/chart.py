@@ -33,6 +33,7 @@ import math
 import os
 import shutil
 import sys
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Callable, Dict, Iterator, List, Optional, Sequence, Tuple
@@ -346,7 +347,7 @@ def _legend(lines: List[_Line], width: int, moment: Callable[[float], str]) -> D
         for line in lines
     }
     widths = [max(len(row[column]) for row in stats.values()) for column in range(5)]
-    longest = max(len(line.name) for line in lines)
+    longest = max(_width(line.name) for line in lines)
     room = width - (2 + len("  max ") + len(" at ") + len("  last ") + len("  min ") + len("  mean ") + sum(widths))
     show_times = room >= min(longest, NAME_WIDTH_WITH_TIMES)
     if not show_times:
@@ -360,7 +361,7 @@ def _legend(lines: List[_Line], width: int, moment: Callable[[float], str]) -> D
             (line.label, line.color),
             (" ", ""),
             (name, BOLD),
-            (" " * (name_width - len(name)) + "  max ", MUTED),
+            (" " * (name_width - _width(name)) + "  max ", MUTED),
             (high.rjust(widths[0]), line.color),
             ((" at " + at.ljust(widths[1]) if show_times else "") + "  last ", MUTED),
             (last.rjust(widths[2]), line.color),
@@ -516,12 +517,34 @@ def _clock(moment: datetime, seconds: bool) -> str:
 
 
 def _truncate_middle(text: str, width: int) -> str:
-    """Shorten text to width characters by replacing its middle with an ellipsis."""
-    if len(text) <= width:
+    """Shorten text to at most width columns by replacing its middle with an ellipsis."""
+    if _width(text) <= width:
         return text
-    head = width // 2
-    tail_start = len(text) - (width - 1 - head)
-    return text[:head] + "…" + text[tail_start:]
+    head = _fit(text, width // 2)
+    tail = _fit(text[::-1], width - 1 - _width(head))[::-1]
+    return head + "…" + tail
+
+
+def _fit(text: str, width: int) -> str:
+    """The longest start of text that fits in width columns."""
+    used = 0
+    for index, char in enumerate(text):
+        used += _char_width(char)
+        if used > width:
+            return text[:index]
+    return text
+
+
+def _width(text: str) -> int:
+    """The columns text takes in a terminal."""
+    return sum(_char_width(char) for char in text)
+
+
+def _char_width(char: str) -> int:
+    """Two columns for wide characters such as CJK and most emoji, none for combining marks, otherwise one."""
+    if unicodedata.combining(char):
+        return 0
+    return 2 if unicodedata.east_asian_width(char) in ("W", "F") else 1
 
 
 def _printable(text: str) -> str:

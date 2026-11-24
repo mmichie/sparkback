@@ -58,8 +58,8 @@ The codebase is structured around a simple object-oriented design pattern:
 
 ### Core Components
 
-1. **AbstractStyle Base Class** (sparkback/spark.py:53-72)
-   - Defines the interface for all visualization styles
+1. **AbstractStyle Base Class** (sparkback/spark.py)
+   - Defines the interface for all visualization styles (an `abc.ABC`)
    - Single abstract method: `scale_data(data, verbose=False)`
 
 2. **Style Implementations**
@@ -72,6 +72,7 @@ The codebase is structured around a simple object-oriented design pattern:
    - **ArrowsStyle**: Directional indicators (↓→↗↑) - shows trend between consecutive values
    - **MultiLineGraphStyle**: Vertical bar chart rendered across 10 lines
    - **LineGraphStyle**: Connected line graphs using box-drawing characters (─│╱╲●) - configurable height
+   - **BrailleLineGraphStyle**: High-resolution line graphs in braille, two data points per character - configurable height, optional fill
 
 3. **Key Functions**
    - `get_style_instance(style)`: Factory function returning style instances from the STYLES dict
@@ -102,8 +103,9 @@ Series colors are ANSI 16-color codes (theme-adaptive) in an order chosen for co
 To add a new visualization style:
 1. Create a class inheriting from AbstractStyle
 2. Define the `scale_data(data, verbose)` method
-3. Add the class to the STYLES dictionary in sparkback/spark.py:185-193
+3. Add the class to the STYLES dictionary in sparkback/spark.py
 4. The new style will automatically appear in CLI `--ticks` choices
+5. Export it from sparkback/__init__.py, which lists the public API explicitly (imports and `__all__`)
 
 ## Code Standards
 

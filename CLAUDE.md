@@ -38,12 +38,14 @@ uv run pytest tests/spark_test.py::test_scale_data_default
 ### Linting and Formatting
 ```bash
 # Format code with Black
-uv run black sparkback/ tests/
+uv run black .
 
 # Run linters (all configured for 120 character line length)
-uv run flake8 sparkback/ tests/
-uv run pylint sparkback/
+uv run flake8 .
+uv run pylint --recursive=y sparkback tests examples
 ```
+
+CI (.github/workflows/python.yml) fails on `black --check .`, any flake8 finding, and pylint errors or warnings (`--disable=C,R`; the convention and refactor messages are advice), and runs the tests on Python 3.11 and 3.15. It installs with `uv sync --locked`, so run `uv lock` after changing dependencies.
 
 ### Building
 ```bash

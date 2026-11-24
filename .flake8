@@ -1,3 +1,5 @@
 [flake8]
 max-line-length = 120
-
+# Black puts spaces around ':' in slices with complex bounds, which E203 flags
+extend-ignore = E203
+extend-exclude = .venv

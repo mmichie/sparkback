@@ -22,7 +22,7 @@ import argparse
 import math
 import statistics
 from abc import ABC, abstractmethod
-from typing import List, Union, Tuple
+from typing import List, Sequence, Tuple, Union, cast
 
 # ANSI color constants
 ANSI_RESET = "\033[0m"
@@ -63,7 +63,7 @@ def get_gradient_color(normalized_value: float) -> str:
 
 def apply_color_to_output(
     data_points: Union[List[str], List[List[str]]],
-    original_data: List[float],
+    original_data: Sequence[float],
     color_scheme: str,
 ) -> Union[List[str], List[List[str]]]:
     """
@@ -104,7 +104,8 @@ def apply_color_to_output(
     if data_points and isinstance(data_points[0], list):
         # Multi-line graph: line and multiline graphs have a column per data point, braille-line
         # packs two points into each column, so derive the points per column from the width.
-        width = max(len(row) for row in data_points)
+        rows = cast(List[List[str]], data_points)
+        width = max(len(row) for row in rows)
         per_column = math.ceil(len(original_data) / width) if width else 1
 
         def column_color(col_idx: int) -> str:
@@ -113,11 +114,11 @@ def apply_color_to_output(
             stop = start + per_column
             return get_color(max(original_data[start:stop] or original_data[-1:]))  # last value for overflow
 
-        return [[colorize(char, column_color(col_idx)) for col_idx, char in enumerate(row)] for row in data_points]
+        return [[colorize(char, column_color(col_idx)) for col_idx, char in enumerate(row)] for row in rows]
     else:
         # Single-line: each character corresponds to a data point
         result = []
-        for idx, char in enumerate(data_points):
+        for idx, char in enumerate(cast(List[str], data_points)):
             if idx < len(original_data):
                 color = get_color(original_data[idx])
             else:
@@ -303,7 +304,7 @@ class LineGraphStyle(AbstractStyle):
             raise ValueError("Graph height must be at least 2")
         self.height = height
 
-    def scale_data(self, data: List[Union[int, float]], verbose: bool = False) -> List[List[str]]:
+    def scale_data(self, data: Sequence[float], verbose: bool = False) -> List[List[str]]:
         """
         Scale data and render as a connected line graph.
 
@@ -468,7 +469,7 @@ class BrailleLineGraphStyle(AbstractStyle):
         self.height = height
         self.filled = filled
 
-    def scale_data(self, data: List[Union[int, float]], verbose: bool = False) -> List[List[str]]:
+    def scale_data(self, data: Sequence[float], verbose: bool = False) -> List[List[str]]:
         """
         Scale data and render as a high-resolution braille line graph.
 

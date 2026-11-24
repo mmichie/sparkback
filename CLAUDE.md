@@ -73,7 +73,7 @@ The codebase is structured around a simple object-oriented design pattern:
 
 3. **Key Functions**
    - `get_style_instance(style)`: Factory function returning style instances from the STYLES dict
-   - `print_ansi_spark(data_points, verbose, style)`: Renders sparklines (handles both single-line and multi-line output)
+   - `print_ansi_spark(data_points, verbose)`: Renders sparklines (handles both single-line and multi-line output)
    - `print_stats(data)`: Computes min, max, mean, and standard deviation
 
 ### Data Flow

@@ -633,14 +633,13 @@ STYLES = {
 }
 
 
-def print_ansi_spark(data_points, verbose=False, style=None):
+def print_ansi_spark(data_points, verbose=False):
     """
-    Print the list of data points in the ANSI terminal, formatted according to the specified style.
+    Print the list of data points in the ANSI terminal.
 
     Args:
         data_points (list or list of lists): A list of data points or a list of lists for multiline graphs.
-        verbose (bool): Whether to print verbose output.
-        style (str): The style of the graph, which could influence formatting details.
+        verbose (bool): Whether to label each point (or line of a multiline graph).
     """
     if isinstance(data_points[0], list):
         if verbose:
